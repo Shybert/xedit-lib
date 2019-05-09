@@ -12,6 +12,7 @@ type
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
+  function ResolveObjects(_id: Cardinal): TObject;
   procedure StoreList(lst: TList; len: PInteger);
   procedure FilterResultArray;
   procedure SortResultArray;
@@ -19,6 +20,7 @@ type
   procedure StoreIfAssigned(const x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(const x: IInterface): Cardinal;
   function StoreNodes(nodes: TDynViewNodeDatas): Cardinal;
+  function StoreObjects(obj: TObject): Cardinal;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
   procedure SetResultFromList(var sl: TStringList; len: PInteger);
   {$endregion}
@@ -34,6 +36,7 @@ type
   function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl;
   function ReleaseNodes(_id: Cardinal): WordBool; cdecl;
+  function ReleaseObjects(_id: Cardinal): WordBool; cdecl;
   function Switch(_id, _id2: Cardinal): WordBool; cdecl;
   function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function CleanStore: WordBool; cdecl;
@@ -43,6 +46,7 @@ type
 var
   _store: TInterfaceList;
   _nodesStore: TList<TDynViewNodeDatas>;
+  _objectsStore: TList<TObject>;
   _nextID: Cardinal;
   resultStr: WideString;
   resultArray: TCardinalArray;
@@ -98,6 +102,12 @@ function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
 begin
   if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
   Result := _nodesStore[_id];
+end;
+
+function ResolveObjects(_id: Cardinal): TObject;
+begin
+  if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
+  Result := _objectsStore[_id];
 end;
 
 procedure StoreList(lst: TList; len: PInteger);
@@ -287,6 +297,11 @@ function StoreNodes(nodes: TDynViewNodeDatas): Cardinal;
 begin
   Result := _nodesStore.Add(nodes);
 end;
+
+function StoreObjects(obj: TObject): Cardinal;
+begin
+    Result := _objectsStore.Add(obj);
+end;
 {$endregion}
 
 {$region 'API functions'}
@@ -295,8 +310,10 @@ begin
   // initialize variables
   _store := TInterfaceList.Create;
   _nodesStore := TList<TDynViewNodeDatas>.Create;
+  _objectsStore := TList<TObject>.Create;
   _store.Add(nil);
   _nodesStore.Add(nil);
+  _objectsStore.Add(nil);
   resultStr := '';
 
   // add welcome message
@@ -312,6 +329,7 @@ procedure CloseXEdit; cdecl;
 begin
   _store.Free;
   _nodesStore.Free;
+  _objectsStore.Free;
   SetLength(xFiles, 0);
   xFiles := nil;
   wbFileForceClosed;
@@ -444,6 +462,19 @@ begin
     end;
     SetLength(nodes, 0);
     _nodesStore[_id] := nil;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ReleaseObjects(_id: Cardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if (_id = 0) or (_id >= Cardinal(_objectsStore.Count))
+    or (_objectsStore[_id] = nil) then exit;
+    _objectsStore[_id] := nil;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
