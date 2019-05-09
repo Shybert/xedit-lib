@@ -50,7 +50,15 @@ uses
   txFilter in 'tests\txFilter.pas',
   Argo in 'lib\Argo\Argo.pas',
   ArgoTypes in 'lib\Argo\ArgoTypes.pas',
-  Mahogany in 'lib\mahogany\Mahogany.pas';
+  Mahogany in 'lib\mahogany\Mahogany.pas',
+  JsonDataObjects in 'lib\xedit\JsonDataObjects.pas',
+  wbDataFormat in 'lib\xedit\wbDataFormat.pas',
+  wbDataFormatNif in 'lib\xedit\wbDataFormatNif.pas',
+  wbDataFormatNifTypes in 'lib\xedit\wbDataFormatNifTypes.pas',
+  wbHalfFloat in 'lib\xedit\wbHalfFloat.pas',
+  wbNifMath in 'lib\xedit\wbNifMath.pas',
+  xeNifs in 'src\xeNifs.pas',
+  txNifs in 'tests\txNifs.pas';
 
 {$R XEditLib.RES}
 {$MAXSTACKSIZE 2097152}

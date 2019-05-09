@@ -33,7 +33,14 @@ uses
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
   Argo in 'lib\Argo\Argo.pas',
-  ArgoTypes in 'lib\Argo\ArgoTypes.pas';
+  ArgoTypes in 'lib\Argo\ArgoTypes.pas',
+  wbDataFormatNif in 'lib\xedit\wbDataFormatNif.pas',
+  wbDataFormat in 'lib\xedit\wbDataFormat.pas',
+  wbNifMath in 'lib\xedit\wbNifMath.pas',
+  JsonDataObjects in 'lib\xedit\JsonDataObjects.pas',
+  wbHalfFloat in 'lib\xedit\wbHalfFloat.pas',
+  wbDataFormatNifTypes in 'lib\xedit\wbDataFormatNifTypes.pas',
+  xeNifs in 'src\xeNifs.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}

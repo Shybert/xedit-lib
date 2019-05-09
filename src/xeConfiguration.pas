@@ -5,7 +5,7 @@ interface
 uses
   SysUtils, Classes, ShlObj,
   // xedit units
-  wbInterface, wbBSA, wbDefinitionsFO4, wbDefinitionsTES5, wbDefinitionsTES4,
+  wbInterface, wbBSA, wbDataFormat, wbDefinitionsFO4, wbDefinitionsTES5, wbDefinitionsTES4,
   wbDefinitionsFNV, wbDefinitionsFO3;
 
 type
@@ -23,6 +23,7 @@ type
   {$endregion}
 
   {$region 'Functions'}
+  function dfResourceOpenData(const aContainerName, aFileName: string): TBytes;
   function GetMyGamesPath: String;
   function GetGameIniPath(myGamesPath: String; GameMode: TGameMode): String;
   procedure SetGame(id: integer);
@@ -71,6 +72,11 @@ uses
   xeHelpers;
 
 {$region 'SetGame'}
+function dfResourceOpenData(const aContainerName, aFileName: string): TBytes;
+begin
+  Result := wbContainerHandler.OpenResourceData(aContainerName, aFileName);
+end;
+
 function GetMyGamesPath: String;
 var
   profilePath: String;
@@ -157,6 +163,7 @@ begin
   wbLoaderDone := True;
   wbContainerHandler := wbCreateContainerHandler;
   wbContainerHandler._AddRef;
+  wbDataFormat.dfResourceGetDataCallback := @dfResourceOpenData;
   wbAppDataPath := GetAppDataPath;
   wbMyGamesPath := GetMyGamesPath;
   wbTheGameIniFileName := GetGameIniPath(wbMyGamesPath, GameMode);
