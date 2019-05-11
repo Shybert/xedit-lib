@@ -181,11 +181,33 @@ begin
     Result := ResolveElement(Result, nextPath);
 end;
 
+function ResolveFromNif(const element: TwbNifFile; const path: String): TdfElement;
+begin
+  Result := nil;
+
+  if path = 'Roots' then
+  begin
+    Result := element.Footer.Elements['Roots'];
+  end
+  else if path = 'Header' then
+  begin
+    Result := element.Header;
+  end
+  else if path = 'Footer' then
+  begin
+    Result := element.Footer;
+  end;
+end;
+
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 begin
   Result := nil;
 
-  Result := element.Elements[key];
+  if element is TwbNifFile then
+    Result := ResolveFromNif(element as TwbNifFile, key);
+
+  if not Assigned(Result) then
+    Result := element.Elements[key];
 
   if Assigned(Result) and (nextPath <> '') then
     Result := ResolveElement(Result, nextPath);
