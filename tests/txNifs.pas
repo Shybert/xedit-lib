@@ -19,17 +19,18 @@ uses
   xeConfiguration, xeNifs, xeMeta;
 {$ENDIF}
 
-procedure TestBlockByPath(h: Cardinal);
+procedure TestNifGetElement(h: Cardinal; path: PWideChar);
 var
-  h1: Cardinal;
+  element: Cardinal;
 begin
-
+  ExpectSuccess(NifGetElement(h, path, @element));
+  Expect(element > 0, 'Handle should be greater than 0');
 end;
 
 
 procedure BuildFileHandlingTests;
 var
-  h1, h2, h3: Cardinal;
+  h, h1, h2, h3: Cardinal;
   len: Integer;
 begin
   Describe('Nif File Handling Functions', procedure
@@ -101,7 +102,36 @@ begin
               ExpectFailure(NifFree(h3));
               h3 := 0;
             end);
-      end);
+        end);
+
+      Describe('NifGetElement', procedure
+        begin
+          Describe('Block resolution by index', procedure
+            begin
+              It('Should return a handle if the index is in bounds', procedure
+                begin
+                  TestNifGetElement(h1, '[0]');
+                end);
+
+              It('Should fail if index is out of bounds', procedure
+                begin
+                  ExpectFailure(NifGetElement(h1, '[-9]', @h));
+                end);
+            end);
+
+          Describe('Block resolution by name', procedure
+            begin
+              It('Should return a handle if a matching block exists', procedure
+                begin
+                  TestNifGetElement(h1, 'BSFadeNode');
+                end);
+
+              It('Should fail if a matching block does not exist', procedure
+                begin
+                  ExpectFailure(NifGetElement(h1, 'NonExistingBlock', @h));
+                end);
+            end);
+        end);
 
       Describe('GetName', procedure
         begin

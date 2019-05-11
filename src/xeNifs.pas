@@ -11,6 +11,12 @@ function NativeNifGetPathIndex(const path: string): Integer;
 
 {$region 'Native functions'}
 function NativeNifLoad(const filePath: string): TwbNifFile;
+
+function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
+function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
+function ResolveElement(const element: TdfElement; const path: String): TdfElement;
+function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
+
 function NativeNifElementByPath(const element: TdfElement; const path: string): TdfElement;
 function NativeNifBlockByIndex(const nif: TwbNifFile; const index: Integer): TwbNifBlock;
 function NativeNifElementByIndex(const element: TdfElement; const index: Integer): TdfElement;
@@ -19,6 +25,8 @@ function NativeNifElementByIndex(const element: TdfElement; const index: Integer
 {$region 'API functions'}
 function NifLoad(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function NifFree(_id: Cardinal): WordBool; cdecl;
+
+function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 
 //Properties
 function NifGetName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -51,6 +59,42 @@ begin
   begin
     Result := StrToInt(match.Groups[1].Value);
   end;
+end;
+
+function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
+begin
+  Result := not Assigned(element);
+  if Result then
+    SoftException('Failed to resolve element at path: ' + string(path));
+end;
+
+// Temporarily copied from xeElements.pas
+function ParseIndex(const key: string; var index: Integer): Boolean;
+var
+  len: Integer;
+begin
+  len := Length(key);
+  Result := (len > 2) and (key[1] = '[') and (key[len] = ']')
+    and TryStrToInt(Copy(key, 2, len - 2), index);
+end;
+
+function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;
+begin
+  if index = -1 then
+    index := maxIndex;
+  Result := (index > -1) and (index <= maxIndex);
+end;
+procedure SplitPath(const path: String; var key, nextPath: String);
+var
+  i: Integer;
+begin
+  i := Pos('\', path);
+  if i > 0 then begin
+    key := Copy(path, 1, i - 1);
+    nextPath := Copy(path, i + 1, Length(path));
+  end
+  else
+    key := path;
 end;
 {$endregion}
 
@@ -118,6 +162,54 @@ begin
     raise Exception.Create(Format('Unable to open File at %s.', [filePath]));
 
   Result := _nif;
+end;
+
+function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
+begin
+  Result := nil;
+
+  if element is TwbNifFile then begin
+    if CheckIndex((element as TwbNifFile).BlocksCount - 1, index) then
+      Result := (element as TwbNifFile).Blocks[index]
+  end
+  else begin
+    if CheckIndex(element.Count - 1, index) then
+      Result := element.Items[index]
+  end;
+
+  if Assigned(Result) and (nextPath <> '') then
+    Result := ResolveElement(Result, nextPath);
+end;
+
+function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
+begin
+  Result := nil;
+
+  Result := element.Elements[key];
+
+  if Assigned(Result) and (nextPath <> '') then
+    Result := ResolveElement(Result, nextPath);
+end;
+
+function ResolveElement(const element: TdfElement; const path: String): TdfElement;
+var
+  key, nextPath: String;
+  index: Integer;
+begin
+  SplitPath(path, key, nextPath);
+  if ParseIndex(key, index) then begin
+    Result := ResolveByIndex(element, index, nextPath);
+  end
+  else
+    Result := ResolveByPath(element, key, nextPath);
+end;
+
+function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
+begin
+  if string(path) = '' then
+    Result := ResolveObjects(_id) as TdfElement
+  else
+    Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
 
 function NativeNifBlockByIndex(const nif: TwbNifFile; const index: Integer): TwbNifBlock;
@@ -223,6 +315,21 @@ begin
     if not (ResolveObjects(_id) is TwbNifFile) then
       raise Exception.Create('Interface must be a nif file.');
     Result := ReleaseObjects(_id);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+Result := False;
+  try
+    element := NativeNifGetElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    _res^ := StoreObjects(element);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
