@@ -131,6 +131,22 @@ begin
                   ExpectFailure(NifGetElement(h1, 'NonExistingBlock', @h));
                 end);
             end);
+
+          Describe('Keyword resolution', procedure
+            begin
+              It('Should return a handle for the roots element', procedure
+                begin
+                  TestNifGetElement(h1, 'Roots');
+                end);
+              It('Should return a handle for the header', procedure
+                begin
+                  TestNifGetElement(h1, 'Header');
+                end);
+              It('Should return a handle for the footer', procedure
+                begin
+                  TestNifGetElement(h1, 'Footer');
+                end);
+            end);
         end);
 
       Describe('GetName', procedure
