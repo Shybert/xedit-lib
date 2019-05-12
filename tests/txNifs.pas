@@ -132,6 +132,36 @@ begin
                 end);
             end);
 
+          Describe('Block element resolution by index', procedure
+            begin
+              It('Should return a handle if the index is in bounds', procedure
+                begin
+                  ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
+                  TestNifGetElement(h2, '[0]');
+                end);
+
+              It('Should fail if index is out of bounds', procedure
+                begin
+                  ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
+                  ExpectFailure(NifGetElement(h2, '[-9]', @h3));
+                end);
+            end);
+
+          Describe('Block element resolution by name', procedure
+            begin
+              It('Should return a handle if a matching element exists', procedure
+                begin
+                  ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
+                  TestNifGetElement(h2, 'Name');
+                end);
+
+              It('Should fail if a matching element does not exist', procedure
+                begin
+                  ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
+                  ExpectFailure(NifGetElement(h2, 'NonExistingElement', @h3));
+                end);
+            end);
+
           Describe('Keyword resolution', procedure
             begin
               It('Should return a handle for the roots element', procedure
