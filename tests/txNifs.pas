@@ -189,61 +189,6 @@ begin
 
         end);
 
-      Describe('BlockByIndex', procedure
-      begin
-        It('Should return false with invalid block index', procedure
-          begin
-            ExpectFailure(NifElementByPath(h1, '[9999]', @h2));
-            ExpectEqual(h2, 0);
-          end);
-
-        It('Should return a TwbNifBlock handle', procedure
-          begin
-            ExpectSuccess(NifElementByPath(h1, '[41]', @h2));
-            Expect(h2 > 0, 'Handle should be greater than 0');
-          end);
-      end);
-
-      Describe('ElementByPath', procedure
-      begin
-        It('Should return false with invalid path', procedure
-          begin
-            ExpectFailure(NifElementByPath(h1, 'Something\that\doesnt\exist', @h3));
-            ExpectEqual(h3, 0);
-          end);
-
-        It('Should return a TdfElement handle', procedure
-          begin
-            ExpectSuccess(NifElementByPath(h1, 'Roots\[0]\Children', @h2));
-            Expect(h2 > 0, 'Handle should be greater than 0');
-          end);
-      end);
-
-      Describe('ElementByPathKeywords', procedure
-      begin
-        It('Roots', procedure
-          begin
-            ExpectSuccess(NifElementByPath(h1, 'Roots', @h2));
-            Expect(h2 > 0, 'Handle should be greater than 0');
-            //pointers will be free'd by parent
-            h2 := 0;
-          end);
-
-        It('Header', procedure
-          begin
-            ExpectSuccess(NifElementByPath(h1, 'Header', @h2));
-            Expect(h2 > 0, 'Handle should be greater than 0');
-            //pointers will be free'd by parent
-            h2 := 0;
-          end);
-
-        It('Footer', procedure
-          begin
-            ExpectSuccess(NifElementByPath(h1, 'Footer', @h2));
-            Expect(h2 > 0, 'Handle should be greater than 0');
-          end);
-      end);
-
       Describe('Cleanup', procedure
         begin
           It('Should return true.', procedure

@@ -7,8 +7,6 @@ uses
   // xedit modules
   wbDataFormatNif, wbDataFormat;
 
-function NativeNifGetPathIndex(const path: string): Integer;
-
 {$region 'Native functions'}
 function NativeNifLoad(const filePath: string): TwbNifFile;
 
@@ -16,10 +14,6 @@ function ResolveByIndex(const element: TdfElement; index: Integer; const nextPat
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
-
-function NativeNifElementByPath(const element: TdfElement; const path: string): TdfElement;
-function NativeNifBlockByIndex(const nif: TwbNifFile; const index: Integer): TwbNifBlock;
-function NativeNifElementByIndex(const element: TdfElement; const index: Integer): TdfElement;
 {$endregion}
 
 {$region 'API functions'}
@@ -30,12 +24,6 @@ function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBoo
 
 //Properties
 function NifGetName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-function NifElementByPath(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
-{function GetBlockCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
-
-function ElementByIndex(_id: Cardinal; index: Integer; _res: PCardinal):WordBool; cdecl;
-function BlockByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;}
-
 {$endregion}
 
 implementation
@@ -48,19 +36,6 @@ uses
   xeMessages, xeMeta;
 
 {$region 'Helpers'}
-function NativeNifGetPathIndex(const path: string): Integer;
-var
-  match: TMatch;
-begin
-  Result := -1;
-  match := TRegEx.Match(path, '^\[(\d+)\]$');
-
-  if match.Success then
-  begin
-    Result := StrToInt(match.Groups[1].Value);
-  end;
-end;
-
 function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
 begin
   Result := not Assigned(element);
@@ -233,89 +208,6 @@ begin
   else
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
-
-function NativeNifBlockByIndex(const nif: TwbNifFile; const index: Integer): TwbNifBlock;
-begin
-  Result := nil;
-  if nif is TwbNifFile then
-  begin
-    if index < nif.BlocksCount then
-    begin
-      Result := nif.Blocks[index];
-    end;
-  end;
-end;
-
-function NativeNifElementByIndex(const element: TdfElement; const index: Integer): TdfElement;
-begin
-  Result := nil;
-  if element = nil then
-    exit;
-
-  if element is TwbNifFile then
-  begin
-    //BlockByIndex
-    Result := NativeNifBlockByIndex(element as TwbNifFile, index);
-  end
-  else if element is TdfElement then
-  begin
-    //Items
-    if index < element.Count then begin
-      Result := element.Items[index];
-    end;
-  end;
-end;
-
-function NativeNifElementByPath(const element: TdfElement; const path: string): TdfElement;
-var
-  str: string;
-begin
-  Result := nil;
-  if element = nil then
-    exit;
-
-  if Pos('\', path) = 0 then
-    str := path
-  else
-    str := LeftStr(path, Pos('\', path) - 1);
-
-  if element is TwbNifFile then
-  begin
-    if str = 'Roots' then
-    begin
-      Result := (element as TwbNifFile).Footer.Elements['Roots'];
-    end
-    else if str = 'Header' then
-    begin
-      Result := (element as TwbNifFile).Header;
-    end
-    else if str = 'Footer' then
-    begin
-      Result := (element as TwbNifFile).Footer;
-    end;
-  end;
-
-  if Result = nil then
-  begin
-    if TRegEx.IsMatch(str, '^\[\d+\]$') then
-    begin
-      //Index handling
-      Result := NativeNifElementByIndex(element, NativeNifGetPathIndex(str));
-    end
-    else
-    begin
-      //string handling
-      Result := element.Elements[str];
-    end;
-
-  //Recurse path
-    if (Result <> nil) and (Pos('\', path) <> 0) then
-    begin
-      str := RightStr(path, Length(path) - Pos('\', path));
-      Result := NativeNifElementByPath(Result, str);
-    end;
-  end;
-end;
 {$endregion}
 
 {$region 'API functions'}
@@ -351,69 +243,6 @@ Result := False;
     element := NativeNifGetElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     _res^ := StoreObjects(element);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-{function BlockByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
-var
-  _nif: TwbNifFile;
-begin
-  Result := False;
-  try
-    if not (ResolveObjects(_id) is TwbNifFile) then
-      raise Exception.Create('Interface must be a nif file.')
-    else
-    begin
-      _nif := ResolveObjects(_id) as TwbNifFile;
-      if (0 > index) or (index >= _nif.BlocksCount) then
-        raise Exception.Create('Block index outside of array.');
-
-      _res^ := StoreObjects(_nif.Blocks[index]);
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function ElementByIndex(_id: Cardinal; index: Integer; _res: PCardinal):WordBool; cdecl;
-var
-  _obj: TdfElement;
-begin
-  Result := False;
-  try
-    if (ResolveObjects(_id) is TdfElement) then
-    begin
-      _obj := (ResolveObjects(_id) as TdfElement);
-      if _obj.Count > index then
-      begin
-        _res^ := StoreObjects(_obj.Items[index]);
-        Result := True;
-      end;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;}
-
-function NifElementByPath(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element: TdfElement;
-begin
-  Result := False;
-  try
-    if not (ResolveObjects(_id) is TdfElement) then
-      raise Exception.Create('Interface must be a TdfElement');
-
-    element := NativeNifElementByPath(ResolveObjects(_id) as TdfElement, String(path));
-
-    if element = nil then
-      raise Exception.Create('Interface must not be nil');
-
-    _res^ := storeObjects(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
