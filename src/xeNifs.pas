@@ -8,9 +8,19 @@ uses
   wbDataFormatNif, wbDataFormat;
 
 {$region 'Native functions'}
+{$region 'Helpers'}
+function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
+
+// Temporarily copied from xeElements.pas
+function ParseIndex(const key: string; var index: Integer): Boolean;
+function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;
+procedure SplitPath(const path: String; var key, nextPath: String);
+{$endregion}
+
 function NativeNifLoad(const filePath: string): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
+function ResolveFromNif(const element: TwbNifFile; const path: String): TdfElement;
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
@@ -35,6 +45,7 @@ uses
   // xelib modules
   xeMessages, xeMeta;
 
+{$region 'Native functions'}
 {$region 'Helpers'}
 function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
 begin
@@ -73,7 +84,6 @@ begin
 end;
 {$endregion}
 
-{$region 'Native functions'}
 //Change to default nil
 function NativeNifLoad(const filePath: string): TwbNifFile;
 var
