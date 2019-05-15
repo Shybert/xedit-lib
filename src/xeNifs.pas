@@ -20,8 +20,8 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 function NativeNifLoad(const filePath: string): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
-function ResolveFromNif(const element: TwbNifFile; const path: String): TdfElement;
-function ResolveReference(const element: TwbNifBlock; const path: String): TdfElement;
+function ResolveFromNif(const nif: TwbNifFile; const path: String): TdfElement;
+function ResolveReference(const block: TwbNifBlock; const path: String): TdfElement;
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
@@ -167,30 +167,30 @@ begin
     Result := ResolveElement(Result, nextPath);
 end;
 
-function ResolveFromNif(const element: TwbNifFile; const path: String): TdfElement;
+function ResolveFromNif(const nif: TwbNifFile; const path: String): TdfElement;
 begin
   Result := nil;
 
   if path = 'Roots' then
   begin
-    Result := element.Footer.Elements['Roots'];
+    Result := nif.Footer.Elements['Roots'];
   end
   else if path = 'Header' then
   begin
-    Result := element.Header;
+    Result := nif.Header;
   end
   else if path = 'Footer' then
   begin
-    Result := element.Footer;
+    Result := nif.Footer;
   end;
 end;
 
-function ResolveReference(const element: TwbNifBlock; const path: String): TdfElement;
+function ResolveReference(const block: TwbNifBlock; const path: String): TdfElement;
 var
   i: Integer;
 begin
-  for i := 0 to element.RefsCount - 1 do begin
-    Result := element.Refs[i].LinksTo;
+  for i := 0 to block.RefsCount - 1 do begin
+    Result := block.Refs[i].LinksTo;
     if (Result is TwbNifBlock) and (SameText((Result as TwbNifBlock).BlockType, path)) then exit
   end;
   Result := nil;
