@@ -21,6 +21,7 @@ function NativeNifLoad(const filePath: string): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
 function ResolveFromNif(const element: TwbNifFile; const path: String): TdfElement;
+function ResolveReference(const element: TwbNifBlock; const path: String): TdfElement;
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
@@ -184,12 +185,26 @@ begin
   end;
 end;
 
+function ResolveReference(const element: TwbNifBlock; const path: String): TdfElement;
+var
+  i: Integer;
+begin
+  for i := 0 to element.RefsCount - 1 do begin
+    Result := element.Refs[i].LinksTo;
+    if (Result is TwbNifBlock) and (SameText((Result as TwbNifBlock).BlockType, path)) then exit
+  end;
+  Result := nil;
+end;
+
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 begin
   Result := nil;
 
   if element is TwbNifFile then
     Result := ResolveFromNif(element as TwbNifFile, key);
+
+  if (not Assigned(Result)) and (element is TwbNifBlock) then
+    Result := ResolveReference(element as TwbNifBlock, key);
 
   if not Assigned(Result) then
     Result := element.Elements[key];
