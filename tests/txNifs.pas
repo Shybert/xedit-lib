@@ -119,7 +119,7 @@ begin
                 end);
             end);
 
-          Describe('Block resolution by name', procedure
+          Describe('Block resolution by block type', procedure
             begin
               It('Should return a handle if a matching block exists', procedure
                 begin
@@ -162,7 +162,7 @@ begin
                 end);
             end);
 
-          Describe('Block reference resolution by name', procedure
+          Describe('Block reference resolution by block type', procedure
             begin
               It('Should return a handle if a matching reference exists', procedure
                 begin
@@ -170,6 +170,23 @@ begin
                   TestNifGetElement(h2, 'NiNode');
                   TestNifGetElement(h2, 'BSFurnitureMarkerNode');
                   TestNifGetElement(h2, 'bhkCollisionObject');
+                end);
+
+              It('Should fail if a matching reference does not exist', procedure
+                begin
+                  ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
+                  ExpectFailure(NifGetElement(h2, 'NonExistingReference', @h3));
+                end);
+            end);
+
+          Describe('Block reference resolution by name', procedure
+            begin
+              It('Should return a handle if a matching reference exists', procedure
+                begin
+                  ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
+                  TestNifGetElement(h2, 'SteelShield');
+                  TestNifGetElement(h2, 'FRN');
+                  TestNifGetElement(h2, 'BSX');
                 end);
 
               It('Should fail if a matching reference does not exist', procedure

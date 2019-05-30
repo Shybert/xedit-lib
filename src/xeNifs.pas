@@ -189,9 +189,10 @@ function ResolveReference(const block: TwbNifBlock; const path: String): TdfElem
 var
   i: Integer;
 begin
-  for i := 0 to block.RefsCount - 1 do begin
+  for i := 0 to Pred(block.RefsCount) do begin
     Result := block.Refs[i].LinksTo;
-    if (Result is TwbNifBlock) and (SameText((Result as TwbNifBlock).BlockType, path)) then exit
+    if (Result is TwbNifBlock) and
+    (SameText((Result as TwbNifBlock).BlockType, path) or SameText((Result as TwbNifBlock).EditValues['Name'], path)) then exit
   end;
   Result := nil;
 end;
