@@ -194,6 +194,18 @@ begin
                   TestNifGetElement(h1, 'Footer');
                 end);
             end);
+
+          Describe('Nested resolution', procedure
+            begin
+              It('Should resolve nested paths, if all are valid', procedure
+                begin
+                  TestNifGetElement(h1, 'BSFadeNode\NiNode\BSTriShape\BSLightingShaderProperty\BSShaderTextureSet\Textures');
+                end);
+              It('Should fail if any subpath is invalid', procedure
+                begin
+                  ExpectFailure(NifGetElement(h1, 'BSFadeNode\NiNode\BSTriShape\NonExistingBlock', @h2));
+                end);
+            end);
         end);
 
       Describe('GetName', procedure
