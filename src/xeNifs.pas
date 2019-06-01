@@ -13,6 +13,7 @@ function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean
 
 // Temporarily copied from xeElements.pas
 function ParseIndex(const key: string; var index: Integer): Boolean;
+function ParseFullName(const value: String; var fullName: String): Boolean;
 function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;
 procedure SplitPath(const path: String; var key, nextPath: String);
 {$endregion}
@@ -20,8 +21,10 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 function NativeNifLoad(const filePath: string): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
-function ResolveFromNif(const nif: TwbNifFile; const path: String): TdfElement;
 function ResolveReference(const block: TwbNifBlock; const path: String): TdfElement;
+function ResolveFromBlock(const block: TwbNifBlock; const path, nextPath: String): TdfElement;
+function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElement;
+function ResolveFromNif(const nif: TwbNifFile; const path, nextPath: String): TdfElement;
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
@@ -63,6 +66,12 @@ begin
   len := Length(key);
   Result := (len > 2) and (key[1] = '[') and (key[len] = ']')
     and TryStrToInt(Copy(key, 2, len - 2), index);
+end;
+function ParseFullName(const value: String; var fullName: String): Boolean;
+begin
+  Result := (value[1] = '"') and (value[Length(value)] = '"');
+  if Result then
+    fullName := Copy(value, 2, Length(value) - 2);
 end;
 
 function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;
@@ -167,24 +176,6 @@ begin
     Result := ResolveElement(Result, nextPath);
 end;
 
-function ResolveFromNif(const nif: TwbNifFile; const path: String): TdfElement;
-begin
-  Result := nil;
-
-  if path = 'Roots' then
-  begin
-    Result := nif.Footer.Elements['Roots'];
-  end
-  else if path = 'Header' then
-  begin
-    Result := nif.Header;
-  end
-  else if path = 'Footer' then
-  begin
-    Result := nif.Footer;
-  end;
-end;
-
 function ResolveReference(const block: TwbNifBlock; const path: String): TdfElement;
 var
   i: Integer;
@@ -197,21 +188,59 @@ begin
   Result := nil;
 end;
 
+function ResolveFromBlock(const block: TwbNifBlock; const path, nextPath: String): TdfElement;
+begin
+  Result := nil;
+
+  Result := ResolveReference(block, path);
+
+  if not Assigned(Result) then
+    Result := block.Elements[path];
+
+  if Assigned(Result) and (nextPath <> '') then
+    Result := ResolveElement(Result, nextPath)
+end;
+
+
+function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElement;
+begin
+  Result := nil;
+
+  if keyword = 'Roots' then
+    Result := nif.Footer.Elements['Roots']
+  else if keyword = 'Header' then
+    Result := nif.Header
+  else if keyword = 'Footer' then
+    Result := nif.Footer;
+end;
+
+function ResolveFromNif(const nif: TwbNifFile; const path, nextPath: String): TdfElement;
+var
+  name: String;
+begin
+  Result := nil;
+
+  Result := ResolveKeyword(nif, path);
+
+  if not Assigned(Result) then
+    if (ParseFullName(path, name)) then
+      Result := nif.BlockByName(name);
+
+  if not Assigned(Result) then
+    Result := nif.Elements[path];
+
+  if Assigned(Result) and (nextPath <> '') then
+    Result := ResolveElement(Result, nextPath);
+end;
+
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 begin
   Result := nil;
 
   if element is TwbNifFile then
-    Result := ResolveFromNif(element as TwbNifFile, key);
-
-  if (not Assigned(Result)) and (element is TwbNifBlock) then
-    Result := ResolveReference(element as TwbNifBlock, key);
-
-  if not Assigned(Result) then
-    Result := element.Elements[key];
-
-  if Assigned(Result) and (nextPath <> '') then
-    Result := ResolveElement(Result, nextPath);
+    Result := ResolveFromNif(element as TwbNifFile, key, nextPath)
+  else if element is TwbNifBlock then
+    Result := ResolveFromBlock(element as TwbNifBlock, key, nextPath);
 end;
 
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
@@ -220,9 +249,8 @@ var
   index: Integer;
 begin
   SplitPath(path, key, nextPath);
-  if ParseIndex(key, index) then begin
-    Result := ResolveByIndex(element, index, nextPath);
-  end
+  if ParseIndex(key, index) then
+    Result := ResolveByIndex(element, index, nextPath)
   else
     Result := ResolveByPath(element, key, nextPath);
 end;
