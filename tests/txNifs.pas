@@ -132,6 +132,19 @@ begin
                 end);
             end);
 
+          Describe('Block resolution by name', procedure
+            begin
+              It('Should return a handle if a matching block exists', procedure
+                begin
+                  TestNifGetElement(h1, '"WindhelmThrone"');
+                end);
+
+              It('Should fail if a matching block does not exist', procedure
+                begin
+                  ExpectFailure(NifGetElement(h1, '"John Doe"', @h));
+                end);
+            end);
+
           Describe('Block element resolution by index', procedure
             begin
               It('Should return a handle if the index is in bounds', procedure
