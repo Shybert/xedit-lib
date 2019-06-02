@@ -197,15 +197,15 @@ begin
               It('Should return a handle if a matching reference exists', procedure
                 begin
                   ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
-                  TestNifGetElement(h2, 'SteelShield');
-                  TestNifGetElement(h2, 'FRN');
-                  TestNifGetElement(h2, 'BSX');
+                  TestNifGetElement(h2, '"SteelShield"');
+                  TestNifGetElement(h2, '"FRN"');
+                  TestNifGetElement(h2, '"BSX"');
                 end);
 
               It('Should fail if a matching reference does not exist', procedure
                 begin
                   ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
-                  ExpectFailure(NifGetElement(h2, 'NonExistingReference', @h3));
+                  ExpectFailure(NifGetElement(h2, '"John Doe"', @h3));
                 end);
             end);
 

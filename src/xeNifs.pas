@@ -179,11 +179,15 @@ end;
 function ResolveReference(const block: TwbNifBlock; const path: String): TdfElement;
 var
   i: Integer;
+  name: String;
 begin
   for i := 0 to Pred(block.RefsCount) do begin
     Result := block.Refs[i].LinksTo;
-    if (Result is TwbNifBlock) and
-    (SameText((Result as TwbNifBlock).BlockType, path) or SameText((Result as TwbNifBlock).EditValues['Name'], path)) then exit
+    if (Result is TwbNifBlock) then begin
+      if (SameText((Result as TwbNifBlock).BlockType, path)) then exit;
+
+      if (ParseFullName(path, name)) and (SameText((Result as TwbNifBlock).EditValues['Name'], name)) then exit;
+  end;
   end;
   Result := nil;
 end;
