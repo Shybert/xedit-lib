@@ -196,13 +196,13 @@ function ResolveFromBlock(const block: TwbNifBlock; const path, nextPath: String
 begin
   Result := nil;
 
-  Result := ResolveReference(block, path);
+  Result := block.Elements[path];
 
   if not Assigned(Result) then
-    Result := block.Elements[path];
+    Result := ResolveReference(block, path);
 
   if Assigned(Result) and (nextPath <> '') then
-    Result := ResolveElement(Result, nextPath)
+    Result := ResolveElement(Result, nextPath);
 end;
 
 
@@ -227,11 +227,11 @@ begin
   Result := ResolveKeyword(nif, path);
 
   if not Assigned(Result) then
-    if (ParseFullName(path, name)) then
-      Result := nif.BlockByName(name);
+    Result := nif.Elements[path];
 
   if not Assigned(Result) then
-    Result := nif.Elements[path];
+    if (ParseFullName(path, name)) then
+      Result := nif.BlockByName(name);
 
   if Assigned(Result) and (nextPath <> '') then
     Result := ResolveElement(Result, nextPath);
