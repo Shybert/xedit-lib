@@ -27,6 +27,18 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
+procedure TestNifGetBlocks(h: Cardinal; expectedCount: Integer);
+var
+  len: Integer;
+  a: CardinalArray;
+  i: Integer;
+begin
+  ExpectSuccess(NifGetBlocks(h, @len));
+  ExpectEqual(len, expectedCount);
+  a := gra(len);
+  for i := Low(a) to High(a) do
+    Release(a[i]);
+end;
 
 procedure BuildFileHandlingTests;
 var
@@ -235,6 +247,14 @@ begin
                 begin
                   ExpectFailure(NifGetElement(h1, 'BSFadeNode\NiNode\BSTriShape\NonExistingBlock', @h2));
                 end);
+            end);
+        end);
+
+      Describe('NifGetBlocks', procedure
+        begin
+          It('Should return all blocks in a Nif file', procedure
+            begin
+              TestNifGetBlocks(h1, 30);
             end);
         end);
 
