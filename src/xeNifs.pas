@@ -28,6 +28,8 @@ function ResolveFromNif(const nif: TwbNifFile; const path, nextPath: String): Td
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
+
+procedure NativeNifGetBlocks(element: TdfElement);
 {$endregion}
 
 {$region 'API functions'}
@@ -35,6 +37,7 @@ function NifLoad(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function NifFree(_id: Cardinal): WordBool; cdecl;
 
 function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+function NifGetBlocks(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
 //Properties
 function NifGetName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -266,6 +269,19 @@ begin
   else
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
+
+procedure NativeNifGetBlocks(element: TdfElement);
+var
+  i: Integer;
+begin
+  if element is TwbNifFile then begin
+    SetLength(resultArray, (element as TwbNifFile).BlocksCount);
+    for i := 0 to Pred((element as TwbNifFile).BlocksCount) do
+      resultArray[i] := StoreObjects((element as TwbNifFile).Blocks[i]);
+  end
+  else
+    raise Exception.Create('Element must be a Nif file.');
+end;
 {$endregion}
 
 {$region 'API functions'}
@@ -301,6 +317,22 @@ Result := False;
     element := NativeNifGetElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     _res^ := StoreObjects(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NifGetBlocks(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeNifGetElement(_id, '');
+    if NifElementNotFound(element, '') then exit;
+    NativeNifGetBlocks(element);
+    len^ := Length(resultArray);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
