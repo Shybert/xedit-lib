@@ -14,6 +14,7 @@ type
   function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
   function ResolveObjects(_id: Cardinal): TObject;
   procedure StoreList(lst: TList; len: PInteger);
+  procedure StoreObjectList(lst: TList; len: PInteger);
   procedure FilterResultArray;
   procedure SortResultArray;
   procedure GetSortedElements(const container: IwbContainer; var elements: TDynElements);
@@ -117,6 +118,16 @@ begin
   SetLength(resultArray, lst.Count);
   for i := 0 to Pred(lst.Count) do
     resultArray[i] := Store(IInterface(lst[i]));
+  len^ := Length(resultArray);
+end;
+
+procedure StoreObjectList(lst: TList; len: PInteger);
+var
+  i: Integer;
+begin
+  SetLength(resultArray, lst.Count);
+  for i := 0 to Pred(lst.Count) do
+    resultArray[i] := StoreObjects(lst[i]);
   len^ := Length(resultArray);
 end;
 

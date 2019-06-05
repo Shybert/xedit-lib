@@ -29,7 +29,7 @@ function ResolveByPath(const element: TdfElement; const key: String; const nextP
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
 
-procedure NativeNifGetBlocks(element: TdfElement);
+procedure NativeNifGetBlocks(_id: Cardinal; lst: TList);
 {$endregion}
 
 {$region 'API functions'}
@@ -270,14 +270,22 @@ begin
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
 
-procedure NativeNifGetBlocks(element: TdfElement);
+procedure NativeNifGetBlocks(_id: Cardinal; lst: TList);
 var
   i: Integer;
+  element: TObject;
 begin
+  element := ResolveObjects(_id);
+
   if element is TwbNifFile then begin
-    SetLength(resultArray, (element as TwbNifFile).BlocksCount);
     for i := 0 to Pred((element as TwbNifFile).BlocksCount) do
-      resultArray[i] := StoreObjects((element as TwbNifFile).Blocks[i]);
+      lst.Add(Pointer((element as TwbNifFile).Blocks[i]));
+  end
+  else if element is TwbNifBlock then begin
+    for i := 0 to Pred((element as TwbNifBlock).RefsCount) do
+      if (element as TwbNifBlock).Refs[i].LinksTo is TwbNifBlock then begin
+        lst.Add(Pointer((element as TwbNifBlock).Refs[i].LinksTo));
+      end;
   end
   else
     raise Exception.Create('Element must be a Nif file.');
@@ -325,15 +333,18 @@ end;
 
 function NifGetBlocks(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
-  element: TdfElement;
+  lst: TList;
 begin
   Result := False;
   try
-    element := NativeNifGetElement(_id, '');
-    if NifElementNotFound(element, '') then exit;
-    NativeNifGetBlocks(element);
-    len^ := Length(resultArray);
+    lst := TList.Create;
+    try
+      NativeNifGetBlocks(_id, lst);
+      StoreObjectList(lst, len);
     Result := True;
+    finally
+      lst.Free;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;

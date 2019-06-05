@@ -256,6 +256,13 @@ begin
             begin
               TestNifGetBlocks(h1, 30);
             end);
+          It('Should return all referenced blocks in a Nif block', procedure
+            begin
+              ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
+              TestNifGetBlocks(h2, 9);
+              ExpectSuccess(NifGetElement(h1, 'BSFurnitureMarkerNode', @h3));
+              TestNifGetBlocks(h3, 0);
+            end);
         end);
 
       Describe('GetName', procedure
