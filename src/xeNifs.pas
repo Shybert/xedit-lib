@@ -29,7 +29,7 @@ function ResolveByPath(const element: TdfElement; const key: String; const nextP
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
 
-procedure NativeNifGetBlocks(_id: Cardinal; lst: TList);
+procedure NativeNifGetBlocks(_id: Cardinal; search: String; lst: TList);
 {$endregion}
 
 {$region 'API functions'}
@@ -37,7 +37,7 @@ function NifLoad(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function NifFree(_id: Cardinal): WordBool; cdecl;
 
 function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
-function NifGetBlocks(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function NifGetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 
 //Properties
 function NifGetName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -270,21 +270,29 @@ begin
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
 
-procedure NativeNifGetBlocks(_id: Cardinal; lst: TList);
+procedure NativeNifGetBlocks(_id: Cardinal; search: String; lst: TList);
 var
+  element: TdfElement;
+  allBlocks: Boolean;
   i: Integer;
-  element: TObject;
+  block: TwbNifBlock;
 begin
-  element := ResolveObjects(_id);
+  element := ResolveObjects(_id) as TdfElement;
+  allBlocks := search = '';
 
   if element is TwbNifFile then begin
-    for i := 0 to Pred((element as TwbNifFile).BlocksCount) do
-      lst.Add(Pointer((element as TwbNifFile).Blocks[i]));
+    for i := 0 to Pred((element as TwbNifFile).BlocksCount) do begin
+      block := (element as TwbNifFile).Blocks[i];
+      if (allBlocks or (block.BlockType = search)) then
+        lst.Add(Pointer(block));
+    end;
   end
   else if element is TwbNifBlock then begin
-    for i := 0 to Pred((element as TwbNifBlock).RefsCount) do
-      if (element as TwbNifBlock).Refs[i].LinksTo is TwbNifBlock then begin
-        lst.Add(Pointer((element as TwbNifBlock).Refs[i].LinksTo));
+    for i := 0 to Pred((element as TwbNifBlock).RefsCount) do begin
+      block := (element as TwbNifBlock).Refs[i].LinksTo as TwbNifBlock;
+      if Assigned(block) and
+      (allBlocks or (block.BlockType = search)) then
+        lst.Add(Pointer(block));
       end;
   end
   else
@@ -331,7 +339,7 @@ Result := False;
   end;
 end;
 
-function NifGetBlocks(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function NifGetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 var
   lst: TList;
 begin
@@ -339,7 +347,7 @@ begin
   try
     lst := TList.Create;
     try
-      NativeNifGetBlocks(_id, lst);
+      NativeNifGetBlocks(_id, String(search), lst);
       StoreObjectList(lst, len);
     Result := True;
     finally

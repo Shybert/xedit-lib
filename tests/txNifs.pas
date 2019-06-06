@@ -27,13 +27,15 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
-procedure TestNifGetBlocks(h: Cardinal; expectedCount: Integer);
+procedure TestNifGetBlocks(h: Cardinal; path, search: PWideChar; expectedCount: Integer);
 var
   len: Integer;
   a: CardinalArray;
   i: Integer;
 begin
-  ExpectSuccess(NifGetBlocks(h, @len));
+  if path <> '' then
+    ExpectSuccess(NifGetElement(h, path, @h));
+  ExpectSuccess(NifGetBlocks(h, search, @len));
   ExpectEqual(len, expectedCount);
   a := gra(len);
   for i := Low(a) to High(a) do
@@ -252,17 +254,31 @@ begin
 
       Describe('NifGetBlocks', procedure
         begin
-          It('Should return all blocks in a Nif file', procedure
-            begin
-              TestNifGetBlocks(h1, 30);
-            end);
-          It('Should return all referenced blocks in a Nif block', procedure
-            begin
-              ExpectSuccess(NifGetElement(h1, 'BSFadeNode', @h2));
-              TestNifGetBlocks(h2, 9);
-              ExpectSuccess(NifGetElement(h1, 'BSFurnitureMarkerNode', @h3));
-              TestNifGetBlocks(h3, 0);
-            end);
+          Describe('No search', procedure
+          begin
+            It('Should return all blocks in a Nif file', procedure
+              begin
+                TestNifGetBlocks(h1, '', '', 30);
+              end);
+            It('Should return all referenced blocks in a Nif block', procedure
+              begin
+                TestNifGetBlocks(h1, 'BSFadeNode', '', 9);
+                TestNifGetBlocks(h1, 'BSFurnitureMarkerNode', '', 0);
+              end);
+          end);
+
+          Describe('Search', procedure
+          begin
+            It('Should return all blocks of a given block type in a Nif file', procedure
+              begin
+                TestNifGetBlocks(h1, '', 'BSTriShape', 7);
+              end);
+            It('Should return all referenced blocks of a given block type in a Nif block', procedure
+              begin
+                TestNifGetBlocks(h1, 'BSFadeNode', 'BSTriShape', 5);
+                TestNifGetBlocks(h1, 'BSFurnitureMarkerNode', 'BSTriShape', 0);
+              end);
+          end);
         end);
 
       Describe('GetName', procedure
