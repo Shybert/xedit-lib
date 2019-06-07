@@ -21,7 +21,7 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 function NativeNifLoad(const filePath: string): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
-function ResolveReference(const block: TwbNifBlock; const path: String): TdfElement;
+function ResolveReference(const block: TwbNifBlock; const path: String): TwbNifBlock;
 function ResolveFromBlock(const block: TwbNifBlock; const path, nextPath: String): TdfElement;
 function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElement;
 function ResolveFromNif(const nif: TwbNifFile; const path, nextPath: String): TdfElement;
@@ -180,18 +180,18 @@ begin
     Result := ResolveElement(Result, nextPath);
 end;
 
-function ResolveReference(const block: TwbNifBlock; const path: String): TdfElement;
+function ResolveReference(const block: TwbNifBlock; const path: String): TwbNifBlock;
 var
   i: Integer;
   name: String;
 begin
   for i := 0 to Pred(block.RefsCount) do begin
-    Result := block.Refs[i].LinksTo;
-    if (Result is TwbNifBlock) then begin
+    Result := block.Refs[i].LinksTo as TwbNifBlock;
+    if Assigned(Result) then begin
       if (SameText((Result as TwbNifBlock).BlockType, path)) then exit;
 
       if (ParseFullName(path, name)) and (SameText((Result as TwbNifBlock).EditValues['Name'], name)) then exit;
-  end;
+    end;
   end;
   Result := nil;
 end;
