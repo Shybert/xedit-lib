@@ -19,6 +19,14 @@ uses
   xeConfiguration, xeNifs, xeMeta;
 {$ENDIF}
 
+procedure TestNifHasElement(h: Cardinal; path: PWideChar; expectedValue: WordBool = True);
+var
+  exists: WordBool;
+begin
+  ExpectSuccess(NifHasElement(h, path, @exists));
+  ExpectEqual(exists, expectedValue);
+end;
+
 procedure TestNifGetElement(h: Cardinal; path: PWideChar);
 var
   element: Cardinal;
@@ -44,6 +52,7 @@ end;
 
 procedure BuildFileHandlingTests;
 var
+  b: WordBool;
   h, h1, h2, h3: Cardinal;
   len: Integer;
 begin
@@ -115,6 +124,34 @@ begin
             begin
               ExpectFailure(NifFree(h3));
               h3 := 0;
+            end);
+        end);
+
+      Describe('NifHasElement', procedure
+        begin
+          It('Should return true for blocks that exist', procedure
+            begin
+              TestNifHasElement(h1, 'BSFadeNode');
+            end);
+          It('Should return true for block elements that exist', procedure
+            begin
+              TestNifHasElement(h1, 'BSFadeNode\Name');
+            end);
+          It('Should return true for assigned handles', procedure
+            begin
+              TestNifHasElement(h1, '');
+            end);
+          It('Should return false for blocks that do not exist', procedure
+            begin
+              TestNifHasElement(h1, 'NonExistingBlock', false);
+            end);
+          It('Should return false for block elements that do not exist', procedure
+            begin
+              TestNifHasElement(h1, 'BSFadeNode\NonExistingElement', false);
+            end);
+          It('Should fail if the handle is unassigned', procedure
+            begin
+              ExpectFailure(NifHasElement($FFFFFF, '', @b));
             end);
         end);
 

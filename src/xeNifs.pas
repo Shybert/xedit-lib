@@ -36,6 +36,7 @@ procedure NativeNifGetBlocks(_id: Cardinal; search: String; lst: TList);
 function NifLoad(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function NifFree(_id: Cardinal): WordBool; cdecl;
 
+function NifHasElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 function NifGetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 
@@ -319,6 +320,20 @@ begin
     if not (ResolveObjects(_id) is TwbNifFile) then
       raise Exception.Create('Interface must be a nif file.');
     Result := ReleaseObjects(_id);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NifHasElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeNifGetElement(_id, path);
+    bool^ := Assigned(element);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
