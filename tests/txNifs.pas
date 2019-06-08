@@ -47,7 +47,7 @@ begin
   ExpectEqual(len, expectedCount);
   a := gra(len);
   for i := Low(a) to High(a) do
-    Release(a[i]);
+    ReleaseObjects(a[i]);
 end;
 
 procedure BuildFileHandlingTests;
