@@ -18,7 +18,7 @@ function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;
 procedure SplitPath(const path: String; var key, nextPath: String);
 {$endregion}
 
-function NativeNifLoad(const filePath: string): TwbNifFile;
+function NativeLoadNif(const filePath: string): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer; const nextPath: String): TdfElement;
 function ResolveReference(const block: TwbNifBlock; const path: String): TwbNifBlock;
@@ -27,21 +27,21 @@ function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElemen
 function ResolveFromNif(const nif: TwbNifFile; const path, nextPath: String): TdfElement;
 function ResolveByPath(const element: TdfElement; const key: String; const nextPath: String): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
-function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
+function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
-procedure NativeNifGetBlocks(_id: Cardinal; search: String; lst: TList);
+procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
 {$endregion}
 
 {$region 'API functions'}
-function NifLoad(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
-function NifFree(_id: Cardinal): WordBool; cdecl;
+function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
+function FreeNif(_id: Cardinal): WordBool; cdecl;
 
-function NifHasElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
-function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
-function NifGetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
+function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
+function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 
 //Properties
-function NifGetName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 {$endregion}
 
 implementation
@@ -99,7 +99,7 @@ end;
 {$endregion}
 
 //Change to default nil
-function NativeNifLoad(const filePath: string): TwbNifFile;
+function NativeLoadNif(const filePath: string): TwbNifFile;
 var
   _nif: TwbNifFile;
   arrStr: TStringDynArray;
@@ -263,7 +263,7 @@ begin
     Result := ResolveByPath(element, key, nextPath);
 end;
 
-function NativeNifGetElement(_id: Cardinal; path: PWideChar): TdfElement;
+function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 begin
   if string(path) = '' then
     Result := ResolveObjects(_id) as TdfElement
@@ -271,7 +271,7 @@ begin
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
 
-procedure NativeNifGetBlocks(_id: Cardinal; search: String; lst: TList);
+procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
 var
   element: TdfElement;
   allBlocks: Boolean;
@@ -302,18 +302,18 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function NifLoad(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
+function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    _res^ := StoreObjects(NativeNifLoad(string(filePath)));
+    _res^ := StoreObjects(NativeLoadNif(string(filePath)));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function NifFree(_id: Cardinal): WordBool; cdecl;
+function FreeNif(_id: Cardinal): WordBool; cdecl;
 begin
   Result := False;
   try
@@ -325,13 +325,13 @@ begin
   end;
 end;
 
-function NifHasElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
+function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 var
   element: TdfElement;
 begin
   Result := False;
   try
-    element := NativeNifGetElement(_id, path);
+    element := NativeGetNifElement(_id, path);
     bool^ := Assigned(element);
     Result := True;
   except
@@ -339,13 +339,13 @@ begin
   end;
 end;
 
-function NifGetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: TdfElement;
 begin
 Result := False;
   try
-    element := NativeNifGetElement(_id, path);
+    element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     _res^ := StoreObjects(element);
     Result := True;
@@ -354,7 +354,7 @@ Result := False;
   end;
 end;
 
-function NifGetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
+function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 var
   lst: TList;
 begin
@@ -362,7 +362,7 @@ begin
   try
     lst := TList.Create;
     try
-      NativeNifGetBlocks(_id, String(search), lst);
+      NativeGetBlocks(_id, String(search), lst);
       StoreObjectList(lst, len);
     Result := True;
     finally
@@ -373,7 +373,7 @@ begin
   end;
 end;
 
-function NifGetName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   _obj: TdfElement;
 begin
