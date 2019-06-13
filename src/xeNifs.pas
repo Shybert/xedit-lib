@@ -11,6 +11,7 @@ uses
 {$region 'Helpers'}
 function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
 
+function ParseResolveReference(const value: String; var path: String): Boolean;
 // Temporarily copied from xeElements.pas
 function ParseIndex(const key: string; var index: Integer): Boolean;
 function ParseFullName(const value: String; var fullName: String): Boolean;
@@ -62,6 +63,12 @@ begin
     SoftException('Failed to resolve element at path: ' + string(path));
 end;
 
+function ParseResolveReference(const value: String; var path: String): Boolean;
+begin
+  Result := value[1] = '@';
+  if Result then
+    path := Copy(value, 2, Length(value) - 1);
+end;
 // Temporarily copied from xeElements.pas
 function ParseIndex(const key: string; var index: Integer): Boolean;
 var
