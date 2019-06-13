@@ -133,7 +133,7 @@ begin
             begin
               TestHasNifElement(h1, 'BSFadeNode');
             end);
-          It('Should return true for block elements that exist', procedure
+          It('Should return true for block properties that exist', procedure
             begin
               TestHasNifElement(h1, 'BSFadeNode\Name');
             end);
@@ -145,7 +145,7 @@ begin
             begin
               TestHasNifElement(h1, 'NonExistingBlock', false);
             end);
-          It('Should return false for block elements that do not exist', procedure
+          It('Should return false for block properties that do not exist', procedure
             begin
               TestHasNifElement(h1, 'BSFadeNode\NonExistingElement', false);
             end);
@@ -175,6 +175,7 @@ begin
               It('Should return a handle if a matching block exists', procedure
                 begin
                   TestGetNifElement(h1, 'BSFadeNode');
+                  TestGetNifElement(h1, 'NiNode');
                 end);
 
               It('Should fail if a matching block does not exist', procedure
@@ -196,22 +197,28 @@ begin
                 end);
             end);
 
-          Describe('Block element resolution by index', procedure
+          Describe('Block property resolution by index', procedure
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
                   ExpectSuccess(GetNifElement(h1, 'BSFadeNode', @h2));
                   TestGetNifElement(h2, '[0]');
+
+                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode\Children', @h3));
+                  TestGetNifElement(h3, '[1]');
                 end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
                   ExpectSuccess(GetNifElement(h1, 'BSFadeNode', @h2));
                   ExpectFailure(GetNifElement(h2, '[-9]', @h3));
+
+                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode\Children', @h3));
+                  ExpectFailure(GetNifElement(h3, '[20]', @h3));
                 end);
             end);
 
-          Describe('Block element resolution by name', procedure
+          Describe('Block property resolution by name', procedure
             begin
               It('Should return a handle if a matching element exists', procedure
                 begin
