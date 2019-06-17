@@ -238,7 +238,7 @@ begin
                 end);
             end);
 
-          Describe('Block reference resolution', procedure
+          Describe('Reference resolution', procedure
             begin
               It('Should return a handle if the property exists and has a reference', procedure
                 begin
@@ -259,20 +259,20 @@ begin
                   ExpectSuccess(GetNifElement(h1, 'BSTriShape', @h2));
                   ExpectFailure(GetNifElement(h2, '@NonExistingProperty', @h3));
                 end);
-            end);
 
-          Describe('Block property reference resolution', procedure
-            begin
-              It('Should return a handle if the property has a reference', procedure
+              Describe('Get reference of self', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode\Collision Object', @h2));
-                  TestGetNifElement(h2, '@');
-                end);
+                  It('Should return a handle if the property has a reference', procedure
+                    begin
+                      ExpectSuccess(GetNifElement(h1, 'BSFadeNode\Collision Object', @h2));
+                      TestGetNifElement(h2, '@');
+                    end);
 
-              It('Should fail if the property does not have a reference', procedure
-                begin
-                  ExpectSuccess(GetNifElement(h1, 'BSTriShape\Controller', @h2));
-                  ExpectFailure(GetNifElement(h2, '@', @h3));
+                  It('Should fail if the property does not have a reference', procedure
+                    begin
+                      ExpectSuccess(GetNifElement(h1, 'BSTriShape\Controller', @h2));
+                      ExpectFailure(GetNifElement(h2, '@', @h3));
+                    end);
                 end);
             end);
 
