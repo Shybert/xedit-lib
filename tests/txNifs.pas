@@ -53,11 +53,17 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, h1, h2, h3: Cardinal;
+  h, h1, h2, h3, nif, rootNode: Cardinal;
   len: Integer;
 begin
   Describe('Nif File Handling Functions', procedure
     begin
+      BeforeAll(procedure
+        begin
+          ExpectSuccess(LoadNif(PWideChar(GetDataPath + 'xtest-1.nif'), @nif));
+          ExpectSuccess(GetNifElement(nif, 'BSFadeNode', @rootNode));
+        end);
+
       Describe('LoadNif', procedure
         begin
           Describe('From absolute', procedure
@@ -131,27 +137,27 @@ begin
         begin
           It('Should return true for blocks that exist', procedure
             begin
-              TestHasNifElement(h1, 'BSFadeNode');
+              TestHasNifElement(nif, 'BSFadeNode');
             end);
 
           It('Should return true for block properties that exist', procedure
             begin
-              TestHasNifElement(h1, 'BSFadeNode\Name');
+              TestHasNifElement(rootNode, 'Name');
             end);
 
           It('Should return true for assigned handles', procedure
             begin
-              TestHasNifElement(h1, '');
+              TestHasNifElement(nif, '');
             end);
 
           It('Should return false for blocks that do not exist', procedure
             begin
-              TestHasNifElement(h1, 'NonExistingBlock', false);
+              TestHasNifElement(nif, 'NonExistingBlock', false);
             end);
 
           It('Should return false for block properties that do not exist', procedure
             begin
-              TestHasNifElement(h1, 'BSFadeNode\NonExistingElement', false);
+              TestHasNifElement(rootNode, 'NonExistingElement', false);
             end);
 
           It('Should fail if the handle is unassigned', procedure
@@ -166,12 +172,12 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  TestGetNifElement(h1, '[0]');
+                  TestGetNifElement(nif, '[0]');
                 end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectFailure(GetNifElement(h1, '[-9]', @h));
+                  ExpectFailure(GetNifElement(nif, '[-9]', @h));
                 end);
             end);
 
@@ -179,13 +185,13 @@ begin
             begin
               It('Should return a handle if a matching block exists', procedure
                 begin
-                  TestGetNifElement(h1, 'BSFadeNode');
-                  TestGetNifElement(h1, 'NiNode');
+                  TestGetNifElement(nif, 'BSFadeNode');
+                  TestGetNifElement(nif, 'NiNode');
                 end);
 
               It('Should fail if a matching block does not exist', procedure
                 begin
-                  ExpectFailure(GetNifElement(h1, 'NonExistingBlock', @h));
+                  ExpectFailure(GetNifElement(nif, 'NonExistingBlock', @h));
                 end);
             end);
 
@@ -193,12 +199,12 @@ begin
             begin
               It('Should return a handle if a matching block exists', procedure
                 begin
-                  TestGetNifElement(h1, '"WindhelmThrone"');
+                  TestGetNifElement(nif, '"WindhelmThrone"');
                 end);
 
               It('Should fail if a matching block does not exist', procedure
                 begin
-                  ExpectFailure(GetNifElement(h1, '"John Doe"', @h));
+                  ExpectFailure(GetNifElement(nif, '"John Doe"', @h));
                 end);
             end);
 
@@ -206,20 +212,18 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode', @h2));
-                  TestGetNifElement(h2, '[0]');
+                  TestGetNifElement(rootNode, '[0]');
 
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode\Children', @h3));
-                  TestGetNifElement(h3, '[1]');
+                  ExpectSuccess(GetNifElement(rootNode, 'Children', @h));
+                  TestGetNifElement(h, '[1]');
                 end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode', @h2));
-                  ExpectFailure(GetNifElement(h2, '[-9]', @h3));
+                  ExpectFailure(GetNifElement(rootNode, '[-9]', @h));
 
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode\Children', @h3));
-                  ExpectFailure(GetNifElement(h3, '[20]', @h3));
+                  ExpectSuccess(GetNifElement(rootNode, 'Children', @h));
+                  ExpectFailure(GetNifElement(h, '[20]', @h));
                 end);
             end);
 
@@ -227,14 +231,12 @@ begin
             begin
               It('Should return a handle if a matching element exists', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode', @h2));
-                  TestGetNifElement(h2, 'Name');
+                  TestGetNifElement(rootNode, 'Name');
                 end);
 
               It('Should fail if a matching element does not exist', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode', @h2));
-                  ExpectFailure(GetNifElement(h2, 'NonExistingElement', @h3));
+                  ExpectFailure(GetNifElement(rootNode, 'NonExistingElement', @h));
                 end);
             end);
 
@@ -242,36 +244,35 @@ begin
             begin
               It('Should return a handle if the property exists and has a reference', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSFadeNode', @h2));
-                  TestGetNifElement(h2, 'Children\@[0]');
-                  TestGetNifElement(h2, 'Extra Data List\@[0]');
-                  TestGetNifElement(h2, '@Collision Object');
+                  TestGetNifElement(rootNode, 'Children\@[0]');
+                  TestGetNifElement(rootNode, 'Extra Data List\@[0]');
+                  TestGetNifElement(rootNode, '@Collision Object');
                 end);
 
               It('Should fail if the property exists, but does not have a reference', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSTriShape', @h2));
-                  ExpectFailure(GetNifElement(h2, '@Controller', @h3));
+                  ExpectSuccess(GetNifElement(nif, 'BSTriShape', @h));
+                  ExpectFailure(GetNifElement(h, '@Controller', @h));
                 end);
 
               It('Should fail if the property does not exist', procedure
                 begin
-                  ExpectSuccess(GetNifElement(h1, 'BSTriShape', @h2));
-                  ExpectFailure(GetNifElement(h2, '@NonExistingProperty', @h3));
+                  ExpectSuccess(GetNifElement(nif, 'BSTriShape', @h));
+                  ExpectFailure(GetNifElement(h, '@NonExistingProperty', @h));
                 end);
 
               Describe('Get reference of self', procedure
                 begin
                   It('Should return a handle if the property has a reference', procedure
                     begin
-                      ExpectSuccess(GetNifElement(h1, 'BSFadeNode\Collision Object', @h2));
-                      TestGetNifElement(h2, '@');
+                      ExpectSuccess(GetNifElement(nif, 'BSFadeNode\Collision Object', @h));
+                      TestGetNifElement(h, '@');
                     end);
 
                   It('Should fail if the property does not have a reference', procedure
                     begin
-                      ExpectSuccess(GetNifElement(h1, 'BSTriShape\Controller', @h2));
-                      ExpectFailure(GetNifElement(h2, '@', @h3));
+                      ExpectSuccess(GetNifElement(nif, 'BSTriShape\Controller', @h));
+                      ExpectFailure(GetNifElement(h, '@', @h));
                     end);
                 end);
             end);
@@ -280,17 +281,17 @@ begin
             begin
               It('Should return a handle for the roots element', procedure
                 begin
-                  TestGetNifElement(h1, 'Roots');
+                  TestGetNifElement(nif, 'Roots');
                 end);
 
               It('Should return a handle for the header', procedure
                 begin
-                  TestGetNifElement(h1, 'Header');
+                  TestGetNifElement(nif, 'Header');
                 end);
 
               It('Should return a handle for the footer', procedure
                 begin
-                  TestGetNifElement(h1, 'Footer');
+                  TestGetNifElement(nif, 'Footer');
                 end);
             end);
 
@@ -298,12 +299,12 @@ begin
             begin
               It('Should resolve nested paths, if all are valid', procedure
                 begin
-                  TestGetNifElement(h1, 'BSFadeNode\Children\@[0]\Children\@[0]\@Shader Property\@Texture Set\Textures\[1]');
+                  TestGetNifElement(nif, 'BSFadeNode\Children\@[0]\Children\@[0]\@Shader Property\@Texture Set\Textures\[1]');
                 end);
 
               It('Should fail if any subpath is invalid', procedure
                 begin
-                  ExpectFailure(GetNifElement(h1, 'BSFadeNode\Children\@[0]\Children\@[0]\@NonExistingProperty', @h2));
+                  ExpectFailure(GetNifElement(nif, 'BSFadeNode\Children\@[0]\Children\@[0]\@NonExistingProperty', @h));
                 end);
             end);
         end);
@@ -314,12 +315,12 @@ begin
           begin
             It('Should return all blocks in a Nif file', procedure
               begin
-                TestGetBlocks(h1, '', '', 30);
+                TestGetBlocks(nif, '', '', 30);
               end);
             It('Should return all referenced blocks in a Nif block', procedure
               begin
-                TestGetBlocks(h1, 'BSFadeNode', '', 9);
-                TestGetBlocks(h1, 'BSFurnitureMarkerNode', '', 0);
+                TestGetBlocks(nif, 'BSFadeNode', '', 9);
+                TestGetBlocks(nif, 'BSFurnitureMarkerNode', '', 0);
               end);
           end);
 
@@ -327,12 +328,12 @@ begin
           begin
             It('Should return all blocks of a given block type in a Nif file', procedure
               begin
-                TestGetBlocks(h1, '', 'BSTriShape', 7);
+                TestGetBlocks(nif, '', 'BSTriShape', 7);
               end);
             It('Should return all referenced blocks of a given block type in a Nif block', procedure
               begin
-                TestGetBlocks(h1, 'BSFadeNode', 'BSTriShape', 5);
-                TestGetBlocks(h1, 'BSFurnitureMarkerNode', 'BSTriShape', 0);
+                TestGetBlocks(nif, 'BSFadeNode', 'BSTriShape', 5);
+                TestGetBlocks(nif, 'BSFurnitureMarkerNode', 'BSTriShape', 0);
               end);
           end);
         end);
@@ -341,7 +342,7 @@ begin
         begin
           It('Should return true if file handle is valid', procedure
             begin
-              ExpectSuccess(GetNifName(h1, @len));
+              ExpectSuccess(GetNifName(nif, @len));
               ExpectEqual(grs(len), 'NIF');
             end);
 
