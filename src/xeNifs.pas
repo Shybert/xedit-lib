@@ -20,6 +20,7 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 {$endregion}
 
 function NativeLoadNif(const filePath: string): TwbNifFile;
+function NativeAddNif(const filePath: string; ignoreExists: Boolean): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer): TdfElement;
 function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElement;
@@ -34,6 +35,7 @@ procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
 {$region 'API functions'}
 function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function FreeNif(_id: Cardinal): WordBool; cdecl;
+function AddNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -168,6 +170,18 @@ begin
   Result := _nif;
 end;
 
+function NativeAddNif(const filePath: string; ignoreExists: Boolean): TwbNifFile;
+var
+  nif: TwbNifFile;
+begin
+  if not ignoreExists and FileExists(filePath) then
+    raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
+
+  nif := TwbNifFile.Create;
+  nif.SaveToFile(filePath);
+  Result := nif;
+end;
+
 function ResolveByIndex(const element: TdfElement; index: Integer): TdfElement;
 begin
   Result := nil;
@@ -300,6 +314,17 @@ begin
     if not (ResolveObjects(_id) is TwbNifFile) then
       raise Exception.Create('Interface must be a nif file.');
     Result := ReleaseObjects(_id);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function AddNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    _res^ := StoreObjects(NativeAddNif(string(filePath), ignoreExists));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
