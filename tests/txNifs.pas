@@ -145,12 +145,24 @@ begin
         begin
           AfterAll(procedure
             begin
-              DeleteNifs([GetDataPath + 'test.nif']);
+              DeleteNifs([GetDataPath + 'test.nif', GetDataPath + 'meshes\test.nif', GetDataPath + 'meshes\test\test.nif']);
             end);
 
           It('Should return true if it succeeds', procedure
             begin
               ExpectSuccess(AddNif(PWideChar(GetDataPath + 'test.nif'), false, @h));
+            end);
+
+          It('Should return true for a relative path', procedure
+            begin
+              ExpectSuccess(AddNif('meshes\test.nif', false, @h));
+              ExpectSuccess(FileExists(GetDataPath + 'meshes\test.nif'));
+            end);
+
+          It('Should return true for a relative path starting with data\', procedure
+            begin
+              ExpectSuccess(AddNif('data\meshes\test\test.nif', false, @h));
+              ExpectSuccess(FileExists(GetDataPath + 'meshes\test\test.nif'));
             end);
 
           It('Should return false if the file exists and ignoreExists is false', procedure

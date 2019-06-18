@@ -20,7 +20,7 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 {$endregion}
 
 function NativeLoadNif(const filePath: string): TwbNifFile;
-function NativeAddNif(const filePath: string; ignoreExists: Boolean): TwbNifFile;
+function NativeAddNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer): TdfElement;
 function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElement;
@@ -174,8 +174,18 @@ function NativeAddNif(const filePath: string; ignoreExists: Boolean): TwbNifFile
 var
   nif: TwbNifFile;
 begin
+  if ExtractFileDrive(filePath) = '' then begin
+    // Path is assumed to be relative
+    if AnsiLowerCase(filePath).StartsWith('data\') then
+      filePath := wbDataPath + Copy(filePath, 6, Length(filePath))
+    else
+      filePath := wbDataPath + filePath;
+  end;
+
   if not ignoreExists and FileExists(filePath) then
     raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
+
+  ForceDirectories(ExtractFileDir(filePath));
 
   nif := TwbNifFile.Create;
   nif.SaveToFile(filePath);
