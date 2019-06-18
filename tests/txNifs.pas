@@ -50,6 +50,14 @@ begin
     ReleaseObjects(a[i]);
 end;
 
+procedure DeleteNifs(filePaths: TStringArray);
+var
+  i: Integer;
+begin
+  for i := Low(filePaths) to High(filePaths) do
+    DeleteFile(filePaths[i]);
+end;
+
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
@@ -130,6 +138,34 @@ begin
             begin
               ExpectFailure(FreeNif(h3));
               h3 := 0;
+            end);
+        end);
+
+      Describe('AddNif', procedure
+        begin
+          AfterAll(procedure
+            begin
+              DeleteNifs([GetDataPath + 'test.nif']);
+            end);
+
+          It('Should return true if it succeeds', procedure
+            begin
+              ExpectSuccess(AddNif(PWideChar(GetDataPath + 'test.nif'), false, @h));
+            end);
+
+          It('Should return false if the file exists and ignoreExists is false', procedure
+            begin
+              ExpectFailure(AddNif(PWideChar(GetDataPath + 'test.nif'), false, @h));
+            end);
+
+          It('Should return true if the file exists and ignoreExists is true', procedure
+            begin
+              ExpectSuccess(AddNif(PWideChar(GetDataPath + 'test.nif'), true, @h));
+            end);
+
+          It('Should set the correct Nif version', procedure
+            begin
+              // TODO
             end);
         end);
 
