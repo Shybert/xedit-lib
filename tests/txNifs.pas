@@ -141,6 +141,42 @@ begin
             end);
         end);
 
+      Describe('SaveNif', procedure
+        begin
+          AfterAll(procedure
+            begin
+              DeleteNifs([GetDataPath + 'test.nif', GetDataPath + 'meshes\test.nif', GetDataPath + 'meshes\test\test.nif']);
+            end);
+
+          It('Should save Nifs at absolute paths', procedure
+            begin
+              ExpectSuccess(SaveNif(nif, PWideChar(GetDataPath + 'test.nif')));
+              ExpectSuccess(FileExists(GetDataPath + 'test.nif'));
+            end);
+
+          It('Should save Nifs at relative paths', procedure
+            begin
+              ExpectSuccess(SaveNif(nif, 'meshes\test.nif'));
+              ExpectSuccess(FileExists(GetDataPath + 'meshes\test.nif'));
+            end);
+
+          It('Should save Nifs at relative paths starting with data\', procedure
+            begin
+              ExpectSuccess(SaveNif(nif, 'data\meshes\test\test.nif'));
+              ExpectSuccess(FileExists(GetDataPath + 'meshes\test\test.nif'));
+            end);
+
+          It('Should fail if interface is not a file', procedure
+            begin
+              ExpectFailure(SaveNif(rootNode, ''));
+            end);
+
+          It('Should fail if the handle is invalid', procedure
+            begin
+              ExpectFailure(SaveNif($FFFFFF, ''));
+            end);
+        end);
+
       Describe('AddNif', procedure
         begin
           AfterAll(procedure
