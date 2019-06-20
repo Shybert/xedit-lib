@@ -5,11 +5,12 @@ interface
 uses
   Classes,
   // xedit modules
-  wbDataFormatNif, wbDataFormat;
+  wbInterface, wbDataFormatNif, wbDataFormat;
 
 {$region 'Native functions'}
 {$region 'Helpers'}
 function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
+function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
 
 function ParseResolveReference(var key: String): Boolean;
 // Temporarily copied from xeElements.pas
@@ -49,8 +50,6 @@ implementation
 
 uses
   SysUtils, StrUtils, Types, System.RegularExpressions,
-  // xedit modules
-  wbInterface,
   // xelib modules
   xeMessages, xeMeta;
 
@@ -61,6 +60,26 @@ begin
   Result := not Assigned(element);
   if Result then
     SoftException('Failed to resolve element at path: ' + string(path));
+end;
+
+function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
+begin
+  case gameMode of
+    gmFO3, gmFNV:
+      Result := nfFO3;
+    gmTES3:
+      Result := nfTES3;
+    gmTES4:
+      Result := nfTES4;
+    gmTES5:
+      Result := nfTES5;
+    gmSSE, gmTES5VR:
+      Result := nfSSE;
+    gmFO4, gmFO4VR:
+      Result := nfFO4;
+  else
+    Result := nfUnknown;
+  end;
 end;
 
 function ParseResolveReference(var key: String): Boolean;
@@ -188,6 +207,7 @@ begin
   ForceDirectories(ExtractFileDir(filePath));
 
   nif := TwbNifFile.Create;
+  nif.NifVersion := GetCorrespondingNifVersion(wbGameMode);
   nif.SaveToFile(filePath);
   Result := nif;
 end;
