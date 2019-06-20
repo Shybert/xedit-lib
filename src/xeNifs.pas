@@ -11,6 +11,7 @@ uses
 {$region 'Helpers'}
 function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
 function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
+procedure FixRelativeFilePath(var filePath: string);
 
 function ParseResolveReference(var key: String): Boolean;
 // Temporarily copied from xeElements.pas
@@ -79,6 +80,16 @@ begin
       Result := nfFO4;
   else
     Result := nfUnknown;
+  end;
+end;
+
+procedure FixRelativeFilePath(var filePath: string);
+begin
+  if ExtractFileDrive(filePath) = '' then begin // Path is relative
+    if AnsiLowerCase(filePath).StartsWith('data\') then
+      filePath := wbDataPath + Copy(filePath, 6, Length(filePath))
+    else
+      filePath := wbDataPath + filePath;
   end;
 end;
 
@@ -189,17 +200,11 @@ begin
   Result := _nif;
 end;
 
-function NativeAddNif(const filePath: string; ignoreExists: Boolean): TwbNifFile;
+function NativeAddNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 var
   nif: TwbNifFile;
 begin
-  if ExtractFileDrive(filePath) = '' then begin
-    // Path is assumed to be relative
-    if AnsiLowerCase(filePath).StartsWith('data\') then
-      filePath := wbDataPath + Copy(filePath, 6, Length(filePath))
-    else
-      filePath := wbDataPath + filePath;
-  end;
+  FixRelativeFilePath(filePath);
 
   if not ignoreExists and FileExists(filePath) then
     raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
