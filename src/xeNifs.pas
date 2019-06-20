@@ -22,6 +22,7 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 {$endregion}
 
 function NativeLoadNif(const filePath: string): TwbNifFile;
+procedure NativeSaveNif(const nif: TwbNifFile; filePath: string);
 function NativeAddNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer): TdfElement;
@@ -37,6 +38,7 @@ procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
 {$region 'API functions'}
 function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function FreeNif(_id: Cardinal): WordBool; cdecl;
+function SaveNif(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
 function AddNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
@@ -200,6 +202,13 @@ begin
   Result := _nif;
 end;
 
+procedure NativeSaveNif(const nif: TwbNifFile; filePath: string);
+begin
+  FixRelativeFilePath(filePath);
+  ForceDirectories(ExtractFileDir(filePath));
+  nif.SaveToFile(filePath);
+end;
+
 function NativeAddNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 var
   nif: TwbNifFile;
@@ -209,11 +218,9 @@ begin
   if not ignoreExists and FileExists(filePath) then
     raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
 
-  ForceDirectories(ExtractFileDir(filePath));
-
   nif := TwbNifFile.Create;
   nif.NifVersion := GetCorrespondingNifVersion(wbGameMode);
-  nif.SaveToFile(filePath);
+  NativeSaveNif(nif, filePath);
   Result := nif;
 end;
 
@@ -349,6 +356,19 @@ begin
     if not (ResolveObjects(_id) is TwbNifFile) then
       raise Exception.Create('Interface must be a nif file.');
     Result := ReleaseObjects(_id);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SaveNif(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if not (ResolveObjects(_id) is TwbNifFile) then
+      raise Exception.Create('Interface must be a Nif file.');
+    NativeSaveNif(ResolveObjects(_id) as TwbNifFile, filePath);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
