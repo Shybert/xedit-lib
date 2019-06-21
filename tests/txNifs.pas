@@ -432,6 +432,31 @@ begin
 
         end);
 
+      Describe('GetNifValue', procedure
+        begin
+          It('Should resolve element values', procedure
+            begin
+              ExpectSuccess(GetNifElement(rootNode, 'Transform\Scale', @h));
+              ExpectSuccess(GetNifValue(h, '', @len));
+              ExpectEqual(grs(len), '1.000000');
+            end);
+
+          It('Should resolve element value at path', procedure
+            begin
+              ExpectSuccess(GetNifValue(rootNode, 'Transform\Scale', @len));
+              ExpectEqual(grs(len), '1.000000');
+              ExpectSuccess(GetNifValue(rootNode, 'Children\[1]', @len));
+              ExpectEqual(grs(len), '15 BSTriShape "WindhelmThrone:0"');
+              ExpectSuccess(GetNifValue(rootNode, 'Children\@[1]\Num Triangles', @len));
+              ExpectEqual(grs(len), '1128');
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetNifValue(nif, 'Non\Existent\Path', @len));
+            end);
+        end);
+
       Describe('Cleanup', procedure
         begin
           It('Should return true.', procedure

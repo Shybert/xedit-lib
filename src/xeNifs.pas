@@ -47,6 +47,7 @@ function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; c
 
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 {$endregion}
 
 implementation
@@ -448,6 +449,22 @@ begin
       len^ := Length(resultStr);
       Result := True;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    resultStr := element.EditValue;
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
