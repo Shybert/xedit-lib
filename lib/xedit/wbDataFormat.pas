@@ -26,7 +26,9 @@ type
     dtS64,
     dtFloat16,
     dtFloat32,
-    dtVector3
+    dtVector3,
+    dtVector4,
+    dtQuaternion
   );
 
   TdfResourceOpenDataCallback = function(const aContainerName, aFileName: string): TBytes;
@@ -54,7 +56,9 @@ const
     8,  // dtS64
     2,  // dtFloat16
     4,  // dtFloat32
-    0   // dtVector3
+    0,  // dtVector3
+    0,  // dtVector4
+    0   // dtQuaternion
   );
 
   DF_OnCreate = 1;
@@ -611,7 +615,7 @@ function dfMerge(
   const aEvents: array of const;
   const aDataType: TdfDataType = dtMerge
 ): TdfMergeDef; overload;
-function dfMerge(const aName: string; const aDefs: array of TdfDef; const aEvents: array of const): TdfMergeDef; overload;
+function dfMerge(const aName: string; const aDefs: array of TdfDef; const aEvents: array of const; const aDataType: TdfDataType = dtMerge): TdfMergeDef; overload;
 function dfMerge(const aName: string; const aDefs: array of TdfDef): TdfMergeDef; overload;
 
 function dfInteger(
@@ -3686,9 +3690,9 @@ begin
   Result.AssignEvents(aEvents);
 end;
 
-function dfMerge(const aName: string; const aDefs: array of TdfDef; const aEvents: array of const): TdfMergeDef;
+function dfMerge(const aName: string; const aDefs: array of TdfDef; const aEvents: array of const; const aDataType: TdfDataType = dtMerge): TdfMergeDef;
 begin
-  Result := dfMerge(aName, aDefs, '', aEvents);
+  Result := dfMerge(aName, aDefs, '', aEvents, aDataType);
 end;
 
 function dfMerge(const aName: string; const aDefs: array of TdfDef): TdfMergeDef;

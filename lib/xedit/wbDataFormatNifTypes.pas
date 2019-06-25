@@ -333,7 +333,7 @@ begin
     dfFloat('Y'),
     dfFloat('Z'),
     dfFloat('W')
-  ], aDefaultValue, aEvents);
+  ], aDefaultValue, aEvents, dtVector4);
 end;
 
 function wbVector4(const aName: string; const aEvents: array of const): TdfDef;
@@ -352,7 +352,7 @@ begin
     dfFloat('X', dtFloat16),
     dfFloat('Y', dtFloat16),
     dfFloat('Z', dtFloat16)
-  ], aDefaultValue, aEvents);
+  ], aDefaultValue, aEvents, dtVector3);
 end;
 
 function wbHalfVector3(const aName: string; const aEvents: array of const): TdfDef;
@@ -371,7 +371,7 @@ begin
     wbByteFloat('X'),
     wbByteFloat('Y'),
     wbByteFloat('Z')
-  ], aDefaultValue, aEvents);
+  ], aDefaultValue, aEvents, dtVector3);
 end;
 
 function wbByteVector3(const aName: string; const aEvents: array of const): TdfDef;
@@ -512,7 +512,7 @@ begin
     dfFloat('X'),
     dfFloat('Y'),
     dfFloat('Z')
-  ], aEvents);
+  ], aEvents, dtQuaternion);
   Result.OnGetText := @QuaternionGetText;
   Result.OnSetText := @QuaternionSetText;
 end;
@@ -529,7 +529,7 @@ begin
     dfFloat('Y'),
     dfFloat('Z'),
     dfFloat('W', '1.0')
-  ], aEvents);
+  ], aEvents, dtQuaternion);
   Result.OnGetText := @QuaternionGetText;
   Result.OnSetText := @QuaternionSetText;
 end;
