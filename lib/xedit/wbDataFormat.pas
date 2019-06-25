@@ -25,7 +25,8 @@ type
     dtU64,
     dtS64,
     dtFloat16,
-    dtFloat32
+    dtFloat32,
+    dtVector3
   );
 
   TdfResourceOpenDataCallback = function(const aContainerName, aFileName: string): TBytes;
@@ -52,7 +53,8 @@ const
     8,  // dtU64
     8,  // dtS64
     2,  // dtFloat16
-    4   // dtFloat32
+    4,  // dtFloat32
+    0   // dtVector3
   );
 
   DF_OnCreate = 1;
@@ -606,7 +608,8 @@ function dfMerge(
   const aName: string;
   const aDefs: array of TdfDef;
   const aDefaultValue: string;
-  const aEvents: array of const
+  const aEvents: array of const;
+  const aDataType: TdfDataType = dtMerge
 ): TdfMergeDef; overload;
 function dfMerge(const aName: string; const aDefs: array of TdfDef; const aEvents: array of const): TdfMergeDef; overload;
 function dfMerge(const aName: string; const aDefs: array of TdfDef): TdfMergeDef; overload;
@@ -3674,10 +3677,11 @@ function dfMerge(
   const aName: string;
   const aDefs: array of TdfDef;
   const aDefaultValue: string;
-  const aEvents: array of const
+  const aEvents: array of const;
+  const aDataType: TdfDataType = dtMerge
 ): TdfMergeDef;
 begin
-  Result := TdfMergeDef.Create(aName, dtMerge, aDefs);
+  Result := TdfMergeDef.Create(aName, aDataType, aDefs);
   Result.DefaultValue := aDefaultValue;
   Result.AssignEvents(aEvents);
 end;
