@@ -13,6 +13,10 @@ function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean
 function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
 procedure FixRelativeFilePath(var filePath: string);
 
+function IsVector(element: TdfElement): Boolean;
+
+function CoordinatesToJSON(element: TdfElement): string;
+
 function ParseResolveReference(var key: String): Boolean;
 // Temporarily copied from xeElements.pas
 function ParseIndex(const key: string; var index: Integer): Boolean;
@@ -48,12 +52,13 @@ function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; c
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 {$endregion}
 
 implementation
 
 uses
-  SysUtils, StrUtils, Types, System.RegularExpressions,
+  Argo, SysUtils, StrUtils, Types, System.RegularExpressions,
   // xelib modules
   xeMessages, xeMeta;
 
@@ -93,6 +98,31 @@ begin
       filePath := wbDataPath + Copy(filePath, 6, Length(filePath))
     else
       filePath := wbDataPath + filePath;
+  end;
+end;
+
+function IsVector(element: TdfElement): Boolean;
+begin
+  Result := (element.DataType = dtVector3) or (element.DataType = dtVector4);
+end;
+
+function CoordinatesToJSON(element: TdfElement): string;
+var
+  obj: TJSONObject;
+begin
+  obj := TJSONObject.Create;
+  try
+    if IsVector(element) then begin
+      obj.D['X'] := element.NativeValues['X'];
+      obj.D['Y'] := element.NativeValues['Y'];
+      obj.D['Z'] := element.NativeValues['Z'];
+      if element.DataType = dtVector4 then
+        obj.D['W'] := element.NativeValues['W'];
+    end;
+
+    Result := obj.ToString;
+  finally
+    obj.Free;
   end;
 end;
 
@@ -463,6 +493,24 @@ begin
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     resultStr := element.EditValue;
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not IsVector(element) then
+      raise Exception.Create('Element is not a vector.');
+    resultStr := CoordinatesToJSON(element);
     len^ := Length(resultStr);
     Result := True;
   except

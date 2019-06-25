@@ -457,6 +457,25 @@ begin
             end);
         end);
 
+      Describe('GetNifVector', procedure
+        begin
+          It('Should resolve vectors as a JSON string', procedure
+            begin
+              ExpectSuccess(GetNifVector(nif, 'bhkMoppBvTreeShape\Origin', @len));
+              ExpectEqual(grs(len), '{"X":-2.16699957847595,"Y":-1.70599961280823,"Z":-0.949999749660492}');
+              ExpectSuccess(GetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', @len));
+              ExpectEqual(grs(len), '{"X":127,"Y":127,"Z":0}');
+              ExpectSuccess(GetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', @len));
+              ExpectEqual(grs(len), '{"X":-2.16199970245361,"Y":-1.70099973678589,"Z":-0.944999814033508,"W":0}');
+            end);
+
+          It('Should fail if the element isn''t a vector', procedure
+            begin
+              ExpectFailure(GetNifVector(nif, '', @len));
+              ExpectFailure(GetNifVector(nif, 'bhkRigidBody\Rotation', @len));
+            end);
+        end);
+
       Describe('Cleanup', procedure
         begin
           It('Should return true.', procedure
