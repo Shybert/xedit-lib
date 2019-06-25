@@ -313,7 +313,7 @@ begin
     dfFloat('X'),
     dfFloat('Y'),
     dfFloat('Z')
-  ], aDefaultValue, aEvents);
+  ], aDefaultValue, aEvents, dtVector3);
 end;
 
 function wbVector3(const aName: string; const aEvents: array of const): TdfDef;
