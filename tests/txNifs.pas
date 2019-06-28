@@ -50,6 +50,14 @@ begin
     ReleaseObjects(a[i]);
 end;
 
+procedure TestNifElementCount(h: Cardinal; expectedCount: Integer);
+var
+  count: Integer;
+begin
+  ExpectSuccess(NifElementCount(h, @count));
+  ExpectEqual(count, expectedCount);
+end;
+
 procedure TestSetNifVector(h: Cardinal; path, coordsJSON: PWideChar);
 var
   len: Integer;
@@ -429,6 +437,37 @@ begin
                 TestGetBlocks(nif, 'BSFurnitureMarkerNode', 'BSTriShape', 0);
               end);
           end);
+        end);
+
+      Describe('ElementCount', procedure
+        begin
+          It('Should return the number of blocks in a Nif file', procedure
+            begin
+              TestNifElementCount(nif, 32);
+            end);
+
+          It('Should return the number of elements in a block', procedure
+            begin
+              TestNifElementCount(rootNode, 13);
+            end);
+
+          It('Should return the number of elements in a struct', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'Header\Export Info', @h));
+              TestNifElementCount(h, 4);
+            end);
+
+          It('Should return the number of elements in an array', procedure
+            begin
+              ExpectSuccess(GetNifElement(rootNode, 'Children', @h));
+              TestNifElementCount(h, 6);
+            end);
+
+          It('Should return 0 if there are no children', procedure
+            begin
+              ExpectSuccess(GetNifElement(rootNode, 'Name', @h));
+              TestNifElementCount(h, 0);
+            end);
         end);
 
       Describe('GetNifName', procedure
