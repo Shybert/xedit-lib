@@ -364,10 +364,10 @@ begin
       if Assigned(block) and
       (allBlocks or (block.BlockType = search)) then
         lst.Add(Pointer(block));
-      end;
+    end;
   end
   else
-    raise Exception.Create('Element must be a Nif file.');
+    raise Exception.Create('Element must be a Nif file or a Nif block.');
 end;
 
 procedure SetCoordinates(const element: TdfElement; coords: TJSONObject);
