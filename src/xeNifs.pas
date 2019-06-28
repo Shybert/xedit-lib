@@ -53,9 +53,12 @@ function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; c
 
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+
+{$region 'Value functions'}
 function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifVector(_id: Cardinal; path, coordsJSON: PWideChar): WordBool; cdecl;
+{$endregion}
 {$endregion}
 
 implementation
@@ -498,6 +501,7 @@ begin
   end;
 end;
 
+{$region 'Value functions'}
 function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   element: TdfElement;
@@ -554,6 +558,7 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 {$endregion}
 
 end.
