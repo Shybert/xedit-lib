@@ -50,6 +50,15 @@ begin
     ReleaseObjects(a[i]);
 end;
 
+procedure TestSetNifVector(h: Cardinal; path, coordsJSON: PWideChar);
+var
+  len: Integer;
+begin
+  ExpectSuccess(SetNifVector(h, path, coordsJSON));
+  ExpectSuccess(GetNifVector(h, path, @len));
+  ExpectEqual(grs(len), string(coordsJSON));
+end;
+
 procedure DeleteNifs(filePaths: TStringArray);
 var
   i: Integer;
@@ -473,6 +482,38 @@ begin
             begin
               ExpectFailure(GetNifVector(nif, '', @len));
               ExpectFailure(GetNifVector(nif, 'bhkRigidBody\Rotation', @len));
+            end);
+        end);
+
+      Describe('SetNifVector', procedure
+        begin
+          It('Should set vector coords', procedure
+            begin
+              TestSetNifVector(nif, 'bhkMoppBvTreeShape\Origin', '{"X":2,"Y":1.25,"Z":-1.625}');
+              TestSetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', '{"X":0,"Y":255,"Z":192}');
+              TestSetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":8.15625,"Y":-25,"Z":-29.78125,"W":1.25}');
+            end);
+
+          It('Should support coords in any order', procedure
+            begin
+              SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', '{"W":0.625,"Y":29.1953125,"X":5.625,"Z":7.125}');
+              GetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', @len);
+              ExpectEqual(grs(len), '{"X":5.625,"Y":29.1953125,"Z":7.125,"W":0.625}');
+            end);
+
+          It('Should fail if the passed JSON is invalid', procedure
+            begin
+              ExpectFailure(SetNifVector(nif, 'bhkMoppBvTreeShape\Origin', 'Wrong'));
+              ExpectFailure(SetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', '{"B":0,"Y":255,"Z":192}'));
+              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":"Not a number","Y":-3.25,"Z":-29.78125,"W":1.25}'));
+              ExpectFailure(SetNifVector(nif, 'bhkRigidBody\Translation', '{"X": 1.0, "Y": 1.0, "Z": 1.0}')); // Missing W coord
+            end);
+
+          It('Should fail if the element isn''t a vector', procedure
+            begin
+              ExpectFailure(SetNifVector(nif, '', '{"X": 1.0, "Y": 1.0, "Z": 1.0}'));
+              ExpectFailure(SetNifVector(nif, 'bhkRigidBody\Rotation', '{"X": 1.0, "Y": 1.0, "Z": 1.0}'));
+              ExpectFailure(SetNifVector(nif, 'BSLightingShaderProperty\UV Offset', '{"X": 1.0, "Y": 1.0, "Z": 1.0}'));
             end);
         end);
 

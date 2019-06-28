@@ -3,7 +3,7 @@ unit xeNifs;
 interface
 
 uses
-  Classes,
+  Argo, Classes,
   // xedit modules
   wbInterface, wbDataFormatNif, wbDataFormat;
 
@@ -37,6 +37,8 @@ function ResolveElement(const element: TdfElement; const path: String): TdfEleme
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
 procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
+
+procedure SetCoordinates(const element: TdfElement; coords: TJSONObject);
 {$endregion}
 
 {$region 'API functions'}
@@ -53,12 +55,13 @@ function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; c
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function SetNifVector(_id: Cardinal; path, coordsJSON: PWideChar): WordBool; cdecl;
 {$endregion}
 
 implementation
 
 uses
-  Argo, SysUtils, StrUtils, Types, System.RegularExpressions,
+  SysUtils, StrUtils, Types, System.RegularExpressions,
   // xelib modules
   xeMessages, xeMeta;
 
@@ -366,6 +369,17 @@ begin
   else
     raise Exception.Create('Element must be a Nif file.');
 end;
+
+procedure SetCoordinates(const element: TdfElement; coords: TJSONObject);
+begin
+  if IsVector(element) then begin
+    element.NativeValues['X'] := coords['X'].AsVariant;
+    element.NativeValues['Y'] := coords['Y'].AsVariant;
+    element.NativeValues['Z'] := coords['Z'].AsVariant;
+    if element.DataType = dtVector4 then
+      element.NativeValues['W'] := coords['W'].AsVariant;
+  end;
+end;
 {$endregion}
 
 {$region 'API functions'}
@@ -513,6 +527,29 @@ begin
     resultStr := CoordinatesToJSON(element);
     len^ := Length(resultStr);
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetNifVector(_id: Cardinal; path, coordsJSON: PWideChar): WordBool; cdecl;
+var
+  element: TdfElement;
+  coords: TJSONObject;
+begin
+  Result := False;
+  try
+    coords := TJSONObject.Create(coordsJSON);
+    try
+      element := NativeGetNifElement(_id, path);
+      if NifElementNotFound(element, path) then exit;
+      if not IsVector(element) then
+        raise Exception.Create('Element is not a vector.');
+      SetCoordinates(element, coords);
+      Result := True;
+    finally
+      coords.Free;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
