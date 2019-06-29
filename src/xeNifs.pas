@@ -11,7 +11,8 @@ uses
 {$region 'Helpers'}
 function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
 function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
-procedure FixRelativeFilePath(var filePath: string);
+function IsFilePathRelative(const filePath: string): Boolean;
+procedure MakeRelativeFilePathAbsolute(var filePath: string);
 
 function IsVector(element: TdfElement): Boolean;
 
@@ -98,14 +99,17 @@ begin
   end;
 end;
 
-procedure FixRelativeFilePath(var filePath: string);
+function IsFilePathRelative(const filePath: string): Boolean;
 begin
-  if ExtractFileDrive(filePath) = '' then begin // Path is relative
-    if AnsiLowerCase(filePath).StartsWith('data\') then
-      filePath := wbDataPath + Copy(filePath, 6, Length(filePath))
-    else
-      filePath := wbDataPath + filePath;
-  end;
+  Result := ExtractFileDrive(filePath) = '';
+end;
+
+procedure MakeRelativeFilePathAbsolute(var filePath: string);
+begin
+  if AnsiLowerCase(filePath).StartsWith('data\') then
+    filePath := wbDataPath + Copy(filePath, 6, Length(filePath))
+  else
+    filePath := wbDataPath + filePath;
 end;
 
 function IsVector(element: TdfElement): Boolean;
@@ -242,7 +246,8 @@ end;
 
 procedure NativeSaveNif(const nif: TwbNifFile; filePath: string);
 begin
-  FixRelativeFilePath(filePath);
+  if IsFilePathRelative(filePath) then
+    MakeRelativeFilePathAbsolute(filePath);
   ForceDirectories(ExtractFileDir(filePath));
   nif.SaveToFile(filePath);
 end;
@@ -251,7 +256,8 @@ function NativeAddNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 var
   nif: TwbNifFile;
 begin
-  FixRelativeFilePath(filePath);
+  if IsFilePathRelative(filePath) then
+    MakeRelativeFilePathAbsolute(filePath);
 
   if not ignoreExists and FileExists(filePath) then
     raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
