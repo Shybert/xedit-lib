@@ -19,6 +19,14 @@ uses
   xeConfiguration, xeNifs, xeMeta;
 {$ENDIF}
 
+procedure TestLoadNif(filePath: string);
+var
+  h: Cardinal;
+begin
+  ExpectSuccess(LoadNif(PWideChar(filePath), @h));
+  Expect(h > 0, 'Should return a handle');
+end;
+
 procedure TestHasNifElement(h: Cardinal; path: PWideChar; expectedValue: WordBool = True);
 var
   exists: WordBool;
@@ -78,7 +86,7 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, h1, h2, h3, nif, rootNode: Cardinal;
+  h, nif, rootNode: Cardinal;
   len: Integer;
 begin
   Describe('Nif File Handling Functions', procedure
@@ -91,70 +99,66 @@ begin
 
       Describe('LoadNif', procedure
         begin
-          Describe('From absolute', procedure
+          It('Should load nifs from absolute paths', procedure
             begin
-              It('Should return false with unsupported file', procedure
-                begin
-                  ExpectFailure(LoadNif(PWideChar(GetDataPath + 'xtest-1.esp'), @h1));
-                  Expect(h1 = 0, 'Handle should be NULL.');
-                end);
-
-                It('Should return a handle if the filepath is valid', procedure
-                  begin
-                    ExpectSuccess(LoadNif(PWideChar(GetDataPath + 'xtest-1.nif'), @h1));
-                    Expect(h1 > 0, 'Handle should be greater than 0');
-                  end);
+              TestLoadNif(GetDataPath + 'xtest-1.nif');
             end);
 
-          Describe('From data', procedure
+          It('Should load nifs from relative paths', procedure
             begin
-              It('Should return false with file not found', procedure
-                begin
-                  ExpectFailure(LoadNif(PWideChar('data\file\that\doesnt\exist.nif'), @h2));
-                end);
-              It('Should return handle of file', procedure
-                begin
-                  ExpectSuccess(LoadNif(PWideChar('data\xtest-2.nif'), @h2));
-                  Expect(h2 > 0, 'Handle should be greater than 0');
-                end);
-
+              TestLoadNif('xtest-1.nif');
             end);
 
-          Describe('From specific Resource', procedure
+          It('Should load nifs from relative paths starting with data\', procedure
             begin
-              It('Should return false with unsupported file', procedure
-                begin
-                  ExpectFailure(LoadNif(PWideChar('Skyrim - Meshes.bsa\file\that\doesnt\exist.nif'), @h3));
-                  Expect(h3 = 0, 'Handle should be NULL.');
-                end);
+              TestLoadNif('data\xtest-1.nif');
+            end);
 
-              It('Should return a handle if the filepath is valid', procedure
-                begin
-                  ExpectSuccess(LoadNif(PWideChar('Skyrim - Meshes.bsa\meshes\primitivegizmo.nif'), @h3));
-                  Expect(h3 > 0, 'Handle should be greater than 0');
-                end);
+          It('Should load nifs from a specific container', procedure
+            begin
+              TestLoadNif('Skyrim - Meshes.bsa\meshes\primitivegizmo.nif');
+            end);
+
+          It('Should fail if the file doesn''t exist', procedure
+            begin
+              ExpectFailure(LoadNif(PWideChar(GetDataPath + 'NonExisting.nif'), @h));
+              ExpectFailure(LoadNif('NonExisting.nif', @h));
+              ExpectFailure(LoadNif('data\NonExisting.nif', @h));
+              ExpectFailure(LoadNif('Skyrim - Meshes.bsa\NonExisting.nif', @h));
+            end);
+
+          It('Should fail if the file isn''t a nif', procedure
+            begin
+              ExpectFailure(LoadNif(PWideChar(GetDataPath + 'xtest-1.esp'), @h));
+              ExpectFailure(LoadNif('xtest-1.esp', @h));
+              ExpectFailure(LoadNif('data\xtest-1.esp', @h));
+              ExpectFailure(LoadNif('Skyrim - Textures.bsa\textures\black.dds', @h));
             end);
       end);
 
       Describe('Free', procedure
         begin
-          It('Should return true.', procedure
+          It('Should free a loaded nif', procedure
             begin
-              ExpectSuccess(FreeNif(h2));
+              ExpectSuccess(LoadNif(PWideChar('xtest-1.nif'), @h));
+              ExpectSuccess(FreeNif(h));
             end);
-          It('Should return false.', procedure
+
+          It('Should fail if the nif has already been freed', procedure
             begin
-              ExpectFailure(FreeNif(h2));
-              h2 := 0;
+              ExpectSuccess(LoadNif(PWideChar('xtest-1.nif'), @h));
+              ExpectSuccess(FreeNif(h));
+              ExpectFailure(FreeNif(h));
             end);
-          It('Should return true.', procedure
+
+          It('Should fail if the handle isn''t a nif', procedure
             begin
-              ExpectSuccess(FreeNif(h3));
+              ExpectFailure(FreeNif(rootNode));
             end);
-          It('Should return false.', procedure
+
+          It('Should fail if the handle is invalid', procedure
             begin
-              ExpectFailure(FreeNif(h3));
-              h3 := 0;
+              ExpectFailure(FreeNif($FFFFFF));
             end);
         end);
 
@@ -555,18 +559,6 @@ begin
               ExpectFailure(SetNifVector(nif, 'BSLightingShaderProperty\UV Offset', '{"X": 1.0, "Y": 1.0, "Z": 1.0}'));
             end);
         end);
-
-      Describe('Cleanup', procedure
-        begin
-          It('Should return true.', procedure
-            begin
-              ExpectSuccess(FreeNif(h1));;
-            end);
-          It('Should return false as parent handle should free.', procedure
-            begin
-              ExpectFailure(FreeNif(h2));;
-            end);
-      end);
   end);
 end;
 end.

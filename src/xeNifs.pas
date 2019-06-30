@@ -13,6 +13,7 @@ function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean
 function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
 function IsFilePathRelative(const filePath: string): Boolean;
 procedure MakeRelativeFilePathAbsolute(var filePath: string);
+function IsFileInContainer(const containerName, pathToFile: string): Boolean;
 
 function IsVector(element: TdfElement): Boolean;
 
@@ -112,6 +113,21 @@ begin
     filePath := wbDataPath + filePath;
 end;
 
+function IsFileInContainer(const containerName, pathToFile: string): Boolean;
+var
+  ResourceList: TStringList;
+begin
+  if not wbContainerHandler.ContainerExists(containerName) then
+    raise Exception.Create(containerName + ' not loaded.');
+  ResourceList := TStringList.Create;
+  try
+    wbContainerHandler.ContainerResourceList(containerName, ResourceList);
+    Result := ResourceList.IndexOf(pathToFile) <> -1
+  finally
+    ResourceList.Free;
+  end;
+end;
+
 function IsVector(element: TdfElement): Boolean;
 begin
   Result := (element.DataType = dtVector3) or (element.DataType = dtVector4);
@@ -179,69 +195,49 @@ begin
 end;
 {$endregion}
 
-//Change to default nil
 function NativeLoadNif(const filePath: string): TwbNifFile;
 var
-  _nif: TwbNifFile;
-  arrStr: TStringDynArray;
-  pathToFile: string;
-  sl: TStringList;
-  bExists: Boolean;
+  nif: TwbNifFile;
+  pathRoot: string;
+  remainingPath: string;
 begin
-  _nif := TwbNifFile.Create;
-  bExists := False;
+  Result := nil;
+  nif := TwbNifFile.Create;
 
-  //if not ContainsText('.nif.bto.btr',RightStr(filePath, 4)) then //Workaround for xEdit bug that allows loading any file
-  //  raise Exception.Create(Format('%s is believed to not be a nif file, skipping', [filePath]));
-
-  if wbContainerHandler.ResourceExists(filePath) then //relative
-  begin
-    //path\to\mesh.nif
-    _nif.LoadFromResource(filePath);
+  // Absolute path
+  if FileExists(filePath) then begin
+     nif.LoadFromFile(filePath);
+     Result := nif;
   end
-  else if FileExists(filePath) then //absolute
-  begin
-    //c:\path\to\mesh.nif
-    _nif.LoadFromFile(filePath);
+
+  // Relative path
+  else if wbContainerHandler.ResourceExists(filePath) then begin
+    nif.LoadFromResource(filePath);
+    Result := nif;
   end
-  else
-  begin //spcific resource
-    arrStr := SplitString(filePath, '\');
-    pathToFile := String.Join('\', arrStr, 1, Length(arrStr) - 1);
 
-    if arrStr[0] = 'data' then //data\path\to\mesh.nif
-    begin
-      if not FileExists(wbDataPath + pathToFile) then
-        raise Exception.Create(Format('File %s doesn''t exist in %s resource', [arrStr[0], pathTofile]));
+  else begin
+    SplitPath(filePath, pathRoot, remainingPath);
 
-      _nif.LoadFromFile(wbDataPath + pathToFile);
+    // Relative path starting with data\
+    if AnsiLowerCase(pathRoot) = 'data' then begin
+      if wbContainerHandler.ResourceExists(remainingPath) then begin
+        nif.LoadFromResource(remainingPath);
+        Result := nif;
+      end;
     end
-    else if wbContainerHandler.ContainerExists(wbDataPath + arrStr[0]) then //Some.BSA\path\to\mesh.nif
-    begin
-      sl := TStringList.Create; //xEdit bug workaround
 
-      wbContainerHandler.ContainerResourceList(wbDataPath + arrStr[0], sl, '');
-      if sl.IndexOf(pathToFile) <> -1 then
-        bExists := True;
-
-      sl.Free;
-
-      if not bExists then
-        raise Exception.Create(Format('Unable to find %s in resource %s', [pathTofile, arrStr[0]]));
-
-      _nif.LoadFromResource(wbDataPath + arrStr[0], pathToFile);
-
-    end
-    else
-    begin //catch all
-      raise Exception.Create(Format('Unable to find %s', [filePath]));
+    // From a specific container
+    else if wbContainerHandler.ContainerExists(wbDataPath + pathRoot) then begin
+      if IsFileInContainer(wbDataPath + pathRoot, remainingPath) then begin
+        nif.LoadFromResource(wbDataPath + pathRoot, remainingPath);
+        Result := nif;
+      end;
     end;
   end;
 
-  if _nif = nil then
-    raise Exception.Create(Format('Unable to open File at %s.', [filePath]));
-
-  Result := _nif;
+  if not Assigned(Result) then
+    raise Exception.Create('Unable to find nif file at path: ' + filePath);
 end;
 
 procedure NativeSaveNif(const nif: TwbNifFile; filePath: string);
