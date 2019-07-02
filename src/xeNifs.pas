@@ -29,7 +29,7 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 
 function NativeLoadNif(const filePath: string): TwbNifFile;
 procedure NativeSaveNif(const nif: TwbNifFile; filePath: string);
-function NativeAddNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
+function NativeCreateNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer): TdfElement;
 function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElement;
@@ -47,7 +47,7 @@ procedure SetCoordinates(const element: TdfElement; coords: TJSONObject);
 function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function FreeNif(_id: Cardinal): WordBool; cdecl;
 function SaveNif(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
-function AddNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
+function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -248,7 +248,7 @@ begin
   nif.SaveToFile(filePath);
 end;
 
-function NativeAddNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
+function NativeCreateNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 var
   nif: TwbNifFile;
 begin
@@ -425,11 +425,11 @@ begin
   end;
 end;
 
-function AddNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
+function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    _res^ := StoreObjects(NativeAddNif(string(filePath), ignoreExists));
+    _res^ := StoreObjects(NativeCreateNif(string(filePath), ignoreExists));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
