@@ -252,15 +252,17 @@ function NativeCreateNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 var
   nif: TwbNifFile;
 begin
-  if IsFilePathRelative(filePath) then
-    MakeRelativeFilePathAbsolute(filePath);
-
-  if not ignoreExists and FileExists(filePath) then
-    raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
-
   nif := TwbNifFile.Create;
   nif.NifVersion := GetCorrespondingNifVersion(wbGameMode);
-  NativeSaveNif(nif, filePath);
+
+  if filePath <> '' then begin
+    if IsFilePathRelative(filePath) then
+      MakeRelativeFilePathAbsolute(filePath);
+    if not ignoreExists and FileExists(filePath) then
+      raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
+    NativeSaveNif(nif, filePath);
+  end;
+
   Result := nif;
 end;
 

@@ -205,9 +205,10 @@ begin
               DeleteNifs([GetDataPath + 'test.nif', GetDataPath + 'meshes\test.nif', GetDataPath + 'meshes\test\test.nif']);
             end);
 
-          It('Should return true if it succeeds', procedure
+          It('Should return true for an absolute path', procedure
             begin
               ExpectSuccess(CreateNif(PWideChar(GetDataPath + 'test.nif'), false, @h));
+              ExpectSuccess(FileExists(GetDataPath + 'test.nif'));
             end);
 
           It('Should return true for a relative path', procedure
@@ -230,6 +231,11 @@ begin
           It('Should return true if the file exists and ignoreExists is true', procedure
             begin
               ExpectSuccess(CreateNif(PWideChar(GetDataPath + 'test.nif'), true, @h));
+            end);
+
+          It('Should let you create a nif without saving it to the disk, by passing an empty filepath', procedure
+            begin
+              ExpectSuccess(CreateNif('', false, @h));
             end);
 
           It('Should set the correct Nif version', procedure
