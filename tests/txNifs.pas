@@ -43,6 +43,17 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
+procedure TestAddNifBlock(h: Cardinal; blockType: PWideChar);
+var
+  element: Cardinal;
+  exists: WordBool;
+begin
+  ExpectSuccess(AddNifBlock(h, blockType, @element));
+  ExpectSuccess(HasNifElement(h, blockType, @exists));
+  Expect(exists, 'The block should be present');
+  Expect(element > 0, 'Handle should be greater than 0');
+end;
+
 procedure TestGetBlocks(h: Cardinal; path, search: PWideChar; expectedCount: Integer);
 var
   len: Integer;
@@ -86,7 +97,7 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, nif, rootNode: Cardinal;
+  h, nif, rootNode, xt2, xt3: Cardinal;
   len: Integer;
 begin
   Describe('Nif File Handling Functions', procedure
@@ -95,6 +106,8 @@ begin
         begin
           ExpectSuccess(LoadNif(PWideChar(GetDataPath + 'xtest-1.nif'), @nif));
           ExpectSuccess(GetNifElement(nif, 'BSFadeNode', @rootNode));
+          ExpectSuccess(LoadNif(PWideChar('xtest-2.nif'), @xt2));
+          ExpectSuccess(LoadNif(PWideChar('xtest-3.nif'), @xt3));
         end);
 
       Describe('LoadNif', procedure
@@ -419,6 +432,36 @@ begin
                 end);
             end);
         end);
+
+        Describe('AddNifBlock', procedure
+          begin
+            It('Should be able to add a block to a nif file', procedure
+              begin
+                TestAddNifBlock(xt2, 'NiTriShape');
+              end);
+
+            It('Should add the first added NiNode type block as a root', procedure
+              begin
+                ExpectSuccess(GetNifElement(xt3, 'Roots', @h));
+                TestNifElementCount(h, 0);
+                TestAddNifBlock(xt3, 'BSTriShape');
+                TestNifElementCount(h, 0);
+                TestAddNifBlock(xt3, 'BSFadeNode');
+                TestNifElementCount(h, 1);
+                TestAddNifBlock(xt3, 'BSFadeNode');
+                TestNifElementCount(h, 1);
+              end);
+
+            It('Should fail if the block type is invalid', procedure
+              begin
+                ExpectFailure(AddNifBlock(xt3, 'NonExistingBlockType', @h));
+              end);
+
+            It('Should fail if the handle isn''t a nif file', procedure
+              begin
+                ExpectFailure(AddNifBlock(rootNode, 'BSFadeNode', @h));
+              end);
+          end);
 
       Describe('GetBlocks', procedure
         begin

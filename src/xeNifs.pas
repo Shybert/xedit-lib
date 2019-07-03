@@ -51,6 +51,7 @@ function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal)
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
 function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 
@@ -461,6 +462,22 @@ Result := False;
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     _res^ := StoreObjects(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element :=  ResolveObjects(_id) as TdfElement;
+    if not (element is TwbNifFile) then
+      raise Exception.Create('Interface must be a nif file.');
+    _res^ := StoreObjects((element as TwbNifFile).AddBlock(blockType));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
