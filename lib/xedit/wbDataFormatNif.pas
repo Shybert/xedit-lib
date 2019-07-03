@@ -1548,7 +1548,7 @@ begin
   // append NiFooter back at the end
   Put(Count, f);
   // if it is the first NiNode type block, add it as a root by default
-  if (BlocksCount = 1) and wbIsNiObject(aBlockType, 'NiNode') then
+  if (f.Elements['Roots'].Count = 0) and wbIsNiObject(aBlockType, 'NiNode') then
     f.Elements['Roots'].Add.NativeValue := 0;
 end;
 
