@@ -93,6 +93,15 @@ begin
   TestNifElementEquals(element1, element2, expectedValue);
 end;
 
+procedure TestGetNifElementFile(h, expectedNif: Cardinal);
+var
+  nif: Cardinal;
+begin
+  ExpectSuccess(GetNifElementFile(h, @nif));
+  Expect(nif > 0, 'Handle should be greater than 0');
+  TestNifElementEquals(nif, expectedNif);
+end;
+
 procedure TestGetNifBlockType(h: Cardinal; path, expectedBlockType: PWideChar);
 var
   block: Cardinal;
@@ -583,6 +592,27 @@ begin
           It('Should fail if the handles are unassigned', procedure
             begin
               ExpectFailure(NifElementEquals($FFFFFF, 999999, @b));
+            end);
+        end);
+
+      Describe('GetNifElementFile', procedure
+        begin
+          It('Should return the input if the input is a nif file', procedure
+            begin
+              TestGetNifElementFile(nif, nif);
+            end);
+
+          It('Should return the file containing a nif block', procedure
+            begin
+              TestGetNifElementFile(rootNode, nif);
+            end);
+
+          It('Should return the file containing a nif element', procedure
+            begin
+              TestGetNifElementFile(transformStruct, nif);
+              TestGetNifElementFile(childrenArray, nif);
+              TestGetNifElementFile(ref, nif);
+              TestGetNifElementFile(vector, nif);
             end);
         end);
 
