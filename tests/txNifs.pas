@@ -93,6 +93,16 @@ begin
   TestNifElementEquals(element1, element2, expectedValue);
 end;
 
+procedure TestGetNifBlockType(h: Cardinal; path, expectedBlockType: PWideChar);
+var
+  block: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(GetNifElement(h, path, @block));
+  ExpectSuccess(GetNifBlockType(block, @len));
+  ExpectEqual(grs(len), string(expectedBlockType));
+end;
+
 procedure TestSetNifVector(h: Cardinal; path, coordsJSON: PWideChar);
 var
   len: Integer;
@@ -584,6 +594,23 @@ begin
               ExpectEqual(grs(len), 'NIF');
             end);
 
+        end);
+
+      Describe('GetNifBlockType', procedure
+        begin
+          It('Should return the block type of a nif block', procedure
+            begin
+              TestGetNifBlockType(rootNode, '', 'BSFadeNode');
+              TestGetNifBlockType(rootNode, 'Children\@[0]', 'NiNode');
+              TestGetNifBlockType(rootNode, 'Children\@[1]', 'BSTriShape');
+              TestGetNifBlockType(rootNode, 'Children\@[1]\@Shader Property', 'BSLightingShaderProperty');
+            end);
+
+          It('Should fail if the handle isn''t a nif block', procedure
+            begin
+              ExpectFailure(GetNifBlockType(nif, @len));
+              ExpectFailure(GetNifBlockType(transformStruct, @len));
+            end);
         end);
 
       Describe('GetNifValue', procedure

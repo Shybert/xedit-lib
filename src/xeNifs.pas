@@ -58,6 +58,7 @@ function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl
 
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetNifBlockType(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
 {$region 'Value functions'}
 function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -551,6 +552,23 @@ begin
       len^ := Length(resultStr);
       Result := True;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifBlockType(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    if not (element is TwbNifBlock) then
+      raise Exception.Create('Interface must be a nif block.');
+    resultStr := (element as TwbNifBlock).BlockType;
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
