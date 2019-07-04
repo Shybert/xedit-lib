@@ -54,6 +54,7 @@ function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBoo
 function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
 function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -512,6 +513,23 @@ begin
     element := ResolveObjects(_id) as TdfElement;
     if NifElementNotFound(element, '') then exit;
     count^ := element.Count;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element, element2: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    if NifElementNotFound(element, '') then exit;
+    element2 := ResolveObjects(_id2) as TdfElement;
+    if NifElementNotFound(element2, '') then exit;
+    bool^ := element.Equals(element2);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

@@ -77,6 +77,22 @@ begin
   ExpectEqual(count, expectedCount);
 end;
 
+procedure TestNifElementEquals(element1, element2: Cardinal; expectedValue: WordBool = True); overload;
+var
+  b: WordBool;
+begin
+  ExpectSuccess(NifElementEquals(element1, element2, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
+procedure TestNifElementEquals(element1, container: Cardinal; path: PWideChar; expectedValue: WordBool = True); overload;
+var
+  element2: Cardinal;
+begin
+  ExpectSuccess(GetNifElement(container, path, @element2));
+  TestNifElementEquals(element1, element2, expectedValue);
+end;
+
 procedure TestSetNifVector(h: Cardinal; path, coordsJSON: PWideChar);
 var
   len: Integer;
@@ -97,7 +113,7 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, nif, rootNode, xt2, xt3: Cardinal;
+  h, nif, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3: Cardinal;
   len: Integer;
 begin
   Describe('Nif File Handling Functions', procedure
@@ -106,6 +122,11 @@ begin
         begin
           ExpectSuccess(LoadNif(PWideChar(GetDataPath + 'xtest-1.nif'), @nif));
           ExpectSuccess(GetNifElement(nif, 'BSFadeNode', @rootNode));
+          ExpectSuccess(GetNifElement(rootNode, 'Children', @childrenArray));
+          ExpectSuccess(GetNifElement(childrenArray, '[0]', @ref));
+          ExpectSuccess(GetNifElement(rootNode, 'Transform', @transformStruct));
+          ExpectSuccess(GetNifElement(transformStruct, 'Translation', @vector));
+          ExpectSuccess(GetNifElement(transformStruct, 'Scale', @float));
           ExpectSuccess(LoadNif(PWideChar('xtest-2.nif'), @xt2));
           ExpectSuccess(LoadNif(PWideChar('xtest-3.nif'), @xt3));
         end);
@@ -520,6 +541,38 @@ begin
             begin
               ExpectSuccess(GetNifElement(rootNode, 'Name', @h));
               TestNifElementCount(h, 0);
+            end);
+        end);
+
+      Describe('NifElementEquals', procedure
+        begin
+          It('Should return true for equal elements', procedure
+            begin
+              TestNifElementEquals(rootNode, nif, '[0]');
+              TestNifElementEquals(transformStruct, rootNode, 'Transform');
+              TestNifElementEquals(childrenArray, rootNode, 'Children');
+              TestNifElementEquals(ref, childrenArray, '[0]');
+              TestNifElementEquals(vector, transformStruct, 'Translation');
+              TestNifElementEquals(float, transformStruct, 'Scale');
+            end);
+
+          It('Should return false for different elements holding the same value', procedure
+            begin
+              TestNifElementEquals(vector, nif, 'BSTriShape\Transform\Translation', False);
+            end);
+
+          It('Should return false for different elements', procedure
+            begin
+              TestNifElementEquals(rootNode, transformStruct, False);
+              TestNifElementEquals(transformStruct, childrenArray, False);
+              TestNifElementEquals(childrenArray, ref, False);
+              TestNifElementEquals(ref, vector, False);
+              TestNifElementEquals(vector, float, False);
+            end);
+
+          It('Should fail if the handles are unassigned', procedure
+            begin
+              ExpectFailure(NifElementEquals($FFFFFF, 999999, @b));
             end);
         end);
 
