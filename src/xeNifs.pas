@@ -64,6 +64,7 @@ function GetNifBlockType(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
 {$region 'Value functions'}
 function GetNifValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifVector(_id: Cardinal; path, coordsJSON: PWideChar): WordBool; cdecl;
 {$endregion}
@@ -619,6 +620,21 @@ begin
     if NifElementNotFound(element, path) then exit;
     resultStr := element.EditValue;
     len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    value^ := Integer(element.NativeValue);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

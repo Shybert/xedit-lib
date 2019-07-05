@@ -142,7 +142,7 @@ procedure BuildFileHandlingTests;
 var
   b: WordBool;
   h, nif, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3: Cardinal;
-  len: Integer;
+  len, i: Integer;
 begin
   Describe('Nif File Handling Functions', procedure
     begin
@@ -694,6 +694,28 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetNifValue(nif, 'Non\Existent\Path', @len));
+            end);
+        end);
+
+      Describe('GetNifIntValue', procedure
+        begin
+          It('Should resolve element integer values', procedure
+            begin
+              ExpectSuccess(GetNifElement(rootNode, 'Children\@[1]\Vertex Data\[1]\Bitangent X', @h));
+              ExpectSuccess(GetNifIntValue(h, '', @i));
+              ExpectEqual(i, -1);
+            end);
+
+          It('Should resolve element integer values at paths', procedure
+            begin
+              ExpectSuccess(LoadNif('meshes\mps\mpsfireboltfire01.nif', @h));
+              ExpectSuccess(GetNifIntValue(h, 'NiPSysRotationModifier\Rotation Angle', @i));
+              ExpectEqual(i, -6);
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetNifIntValue(nif, 'Non\Existent\Path', @i));
             end);
         end);
 
