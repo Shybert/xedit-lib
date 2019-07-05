@@ -56,6 +56,7 @@ function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; c
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -546,6 +547,24 @@ begin
   try
     element := ResolveObjects(_id) as TdfElement;
     _res^ := StoreObjects(element.Root);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    while not (element is TwbNifBlock) and Assigned(element.Parent) do
+      element := element.Parent;
+    if not (element is TwbNifBlock) then
+      raise Exception.Create('Element is not contained in a nif block.');
+    _res^ := StoreObjects(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

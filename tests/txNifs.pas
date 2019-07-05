@@ -102,6 +102,15 @@ begin
   TestNifElementEquals(nif, expectedNif);
 end;
 
+procedure TestGetNifElementBlock(h, expectedBlock: Cardinal);
+var
+  block: Cardinal;
+begin
+  ExpectSuccess(GetNifElementBlock(h, @block));
+  Expect(block > 0, 'Handle should be greater than 0');
+  TestNifElementEquals(block, expectedBlock);
+end;
+
 procedure TestGetNifBlockType(h: Cardinal; path, expectedBlockType: PWideChar);
 var
   block: Cardinal;
@@ -613,6 +622,26 @@ begin
               TestGetNifElementFile(childrenArray, nif);
               TestGetNifElementFile(ref, nif);
               TestGetNifElementFile(vector, nif);
+            end);
+        end);
+
+      Describe('GetNifElementBlock', procedure
+        begin
+          It('Should fail if the input is a nif file', procedure
+            begin
+              ExpectFailure(GetNifElementBlock(nif, @h));
+            end);
+
+          It('Should return the input if the input is a nif block', procedure
+            begin
+              TestGetNifElementBlock(rootNode, rootNode);
+            end);
+
+          It('Should return the block containing a nif element', procedure
+            begin
+              TestGetNifElementBlock(transformStruct, rootNode);
+              TestGetNifElementBlock(vector, rootNode);
+              TestGetNifElementBlock(ref, rootNode);
             end);
         end);
 
