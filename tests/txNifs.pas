@@ -143,6 +143,7 @@ var
   b: WordBool;
   h, nif, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3: Cardinal;
   len, i: Integer;
+  f: Double;
 begin
   Describe('Nif File Handling Functions', procedure
     begin
@@ -716,6 +717,26 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetNifIntValue(nif, 'Non\Existent\Path', @i));
+            end);
+        end);
+
+      Describe('GetNifFloatValue', procedure
+        begin
+          It('Should resolve element float values', procedure
+            begin
+              ExpectSuccess(GetNifFloatValue(float, '', @f));
+              ExpectEqual(f, 1.0);
+            end);
+
+          It('Should resolve element float values at paths', procedure
+            begin
+              ExpectSuccess(GetNifFloatValue(nif, 'BSLightingShaderProperty\Glossiness', @f));
+              ExpectEqual(f, 80.0);
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetNifFloatValue(nif, 'Non\Existent\Path', @f));
             end);
         end);
 
