@@ -121,6 +121,15 @@ begin
   ExpectEqual(grs(len), string(expectedBlockType));
 end;
 
+procedure TestSetNifValue(h: Cardinal; path, value: PWideChar);
+var
+  len: Integer;
+begin
+  ExpectSuccess(SetNifValue(h, path, value));
+  ExpectSuccess(GetNifValue(h, path, @len));
+  ExpectEqual(grs(len), string(value));
+end;
+
 procedure TestSetNifVector(h: Cardinal; path, coordsJSON: PWideChar);
 var
   len: Integer;
@@ -695,6 +704,29 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetNifValue(nif, 'Non\Existent\Path', @len));
+            end);
+        end);
+
+      Describe('SetNifValue', procedure
+        begin
+          It('Should set element values', procedure
+            begin
+              TestSetNifValue(vector, '', '-1.300000 4.300000 29.000000');
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Transform\Scale', @h));
+              TestSetNifValue(h, '', '14.100000');
+              ExpectSuccess(GetNifElement(childrenArray, '[4]', @h));
+              TestSetNifValue(h, '', '28 BSLightingShaderProperty');
+            end);
+
+          It('Should set element value at path', procedure
+            begin
+              TestSetNifValue(rootNode, 'Name', 'Test Name');
+              TestSetNifValue(rootNode, 'Children\[5]', '29 BSShaderTextureSet');
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(SetNifValue(rootNode, 'Non\Existent\Path', 'Test'));
             end);
         end);
 
