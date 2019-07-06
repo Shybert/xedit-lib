@@ -139,6 +139,15 @@ begin
   ExpectEqual(i, value);
 end;
 
+procedure TestSetNifFloatValue(h: Cardinal; path: PWideChar; value: Double);
+var
+  d: Double;
+begin
+  ExpectSuccess(SetNifFloatValue(h, path, value));
+  ExpectSuccess(GetNifFloatValue(h, path, @d));
+  ExpectEqual(d, value);
+end;
+
 procedure TestSetNifVector(h: Cardinal; path, coordsJSON: PWideChar);
 var
   len: Integer;
@@ -800,6 +809,24 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetNifFloatValue(nif, 'Non\Existent\Path', @f));
+            end);
+        end);
+
+      Describe('SetNifFloatValue', procedure
+        begin
+          It('Should set element values', procedure
+            begin
+              TestSetNifFloatValue(float, '', -5.625);
+            end);
+
+          It('Should set element value at path', procedure
+            begin
+              TestSetNifFloatValue(rootNode, 'Transform\Scale', 1.125);
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(SetNifFloatValue(rootNode, 'Non\Existent\Path', 0.33));
             end);
         end);
 
