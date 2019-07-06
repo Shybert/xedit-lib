@@ -130,6 +130,15 @@ begin
   ExpectEqual(grs(len), string(value));
 end;
 
+procedure TestSetNifIntValue(h: Cardinal; path: PWideChar; value: Integer);
+var
+  i: Integer;
+begin
+  ExpectSuccess(SetNifIntValue(h, path, value));
+  ExpectSuccess(GetNifIntValue(h, path, @i));
+  ExpectEqual(i, value);
+end;
+
 procedure TestSetNifVector(h: Cardinal; path, coordsJSON: PWideChar);
 var
   len: Integer;
@@ -749,6 +758,28 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetNifIntValue(nif, 'Non\Existent\Path', @i));
+            end);
+        end);
+
+      Describe('SetNifIntValue', procedure
+        begin
+          It('Should set element values', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'bhkCompressedMeshShapeData\Bits Per Index', @h));
+              TestSetNifIntValue(h, '', 5);
+              ExpectSuccess(GetNifElement(childrenArray, '[4]', @h));
+              TestSetNifIntValue(h, '', 29);
+            end);
+
+          It('Should set element value at path', procedure
+            begin
+              TestSetNifIntValue(nif, 'BSTriShape\Transform\Scale', 2);
+              TestSetNifIntValue(rootNode, 'Children\[5]', 28);
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(SetNifIntValue(rootNode, 'Non\Existent\Path', 1));
             end);
         end);
 
