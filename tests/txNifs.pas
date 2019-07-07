@@ -168,7 +168,7 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, nif, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3: Cardinal;
+  h, nif, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3, c: Cardinal;
   len, i: Integer;
   f: Double;
 begin
@@ -789,6 +789,29 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetNifIntValue(rootNode, 'Non\Existent\Path', 1));
+            end);
+        end);
+
+      Describe('GetNifUIntValue', procedure
+        begin
+          It('Should resolve element unsigned integer values', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Num Triangles', @h));
+              ExpectSuccess(GetNifUIntValue(h, '', @c));
+              ExpectEqual(c, 158);
+            end);
+
+          It('Should resolve element unsigned integer values at paths', procedure
+            begin
+              ExpectSuccess(GetNifUIntValue(nif, 'BSTriShape\Num Vertices', @c));
+              ExpectEqual(c, 111);
+              ExpectSuccess(GetNifUIntValue(nif, 'BSTriShape\Shader Property', @c));
+              ExpectEqual(c, 10);
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetNifUIntValue(nif, 'Non\Existent\Path', @c));
             end);
         end);
 
