@@ -903,6 +903,33 @@ begin
               ExpectFailure(SetNifVector(nif, 'BSLightingShaderProperty\UV Offset', '{"X": 1.0, "Y": 1.0, "Z": 1.0}'));
             end);
         end);
+
+      Describe('GetNifQuaternion', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(LoadNif('meshes\animobjects\animobjectbucket.nif', @h));
+            end);
+
+          It('Should resolve quaternions as an Euler rotation when eulerRotation is true', procedure
+            begin
+              ExpectSuccess(GetNifQuaternion(h, 'bhkRigidBody\Rotation', true, @len));
+              ExpectEqual(grs(len), '{"Y":94.636955,"P":29.171878,"R":-127.683766}');
+            end);
+
+          It('Should resolve quaternions as an angle and axis when eulerRotation is false', procedure
+            begin
+              ExpectSuccess(GetNifQuaternion(h, 'bhkRigidBody\Rotation', false, @len));
+              ExpectEqual(grs(len), '{"A":125.818765,"X":0.180168,"Y":0.801807,"Z":-0.569776}');
+            end);
+
+          It('Should fail if the element isn''t a quaternion', procedure
+            begin
+              ExpectFailure(GetNifQuaternion(nif, '', true, @len));
+              ExpectFailure(GetNifQuaternion(nif, 'bhkMoppBvTreeShape\Origin', true, @len));
+              ExpectFailure(GetNifQuaternion(nif, 'BSLightingShaderProperty\UV Offset', true, @len));
+            end);
+        end);
   end);
 end;
 end.
