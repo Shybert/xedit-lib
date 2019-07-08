@@ -157,6 +157,14 @@ begin
   ExpectEqual(grs(len), string(coordsJSON));
 end;
 
+procedure TestGetNifEnumOptions(h: Cardinal; path: PWideChar; expectedOptions: string);
+var
+  len: Integer;
+begin
+  ExpectSuccess(GetNifEnumOptions(h, path, @len));
+  ExpectEqual(grs(len), expectedOptions);
+end;
+
 procedure DeleteNifs(filePaths: TStringArray);
 var
   i: Integer;
@@ -928,6 +936,23 @@ begin
               ExpectFailure(GetNifQuaternion(nif, '', true, @len));
               ExpectFailure(GetNifQuaternion(nif, 'bhkMoppBvTreeShape\Origin', true, @len));
               ExpectFailure(GetNifQuaternion(nif, 'BSLightingShaderProperty\UV Offset', true, @len));
+            end);
+        end);
+
+      Describe('GetNifEnumOptions', procedure
+        begin
+          It('Should return a comma seperated list of enum options', procedure
+            begin
+              TestGetNifEnumOptions(nif, 'Header\Endian Type', 'ENDIAN_BIG,ENDIAN_LITTLE');
+              TestGetNifEnumOptions(nif, 'bhkRigidBody\Broad Phase Type', 'BROAD_PHASE_INVALID,BROAD_PHASE_ENTITY,BROAD_PHASE_PHANTOM,BROAD_PHASE_BORDER');
+              TestGetNifEnumOptions(nif, 'BSLightingShaderProperty\Texture Clamp Mode', 'CLAMP_S_CLAMP_T,CLAMP_S_WRAP_T,WRAP_S_CLAMP_T,WRAP_S_WRAP_T');
+            end);
+
+          It('Should fail if the element isn''t an enum', procedure
+            begin
+              ExpectFailure(GetNifEnumOptions(nif, '', @len));
+              ExpectFailure(GetNifEnumOptions(rootNode, '', @len));
+              ExpectFailure(GetNifEnumOptions(nif, 'BSTriShape\Flags', @len));
             end);
         end);
   end);

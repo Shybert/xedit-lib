@@ -70,6 +70,7 @@ function SetNifFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBo
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
+function GetNifEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 {$endregion}
 {$endregion}
 
@@ -787,6 +788,37 @@ begin
       Result := True;
     finally
       obj.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  slOptions: TStringList;
+  element: TdfElement;
+  i: Integer;
+begin
+  Result := False;
+  try
+    slOptions := TStringList.Create;
+    slOptions.StrictDelimiter := True;
+    slOptions.Delimiter := ',';
+
+    try
+      element := NativeGetNifElement(_id, path);
+      if NifElementNotFound(element, path) then exit;
+      if not (element.Def is TdfEnumDef) then
+        raise Exception.Create('Element does not have enumeration');
+      for i := 0 to Pred(TdfEnumDef(element.Def).ValuesMapCount) do
+        slOptions.Add(TdfEnumDef(element.Def).Values[i]);
+
+      resultStr := slOptions.DelimitedText;
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      slOptions.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
