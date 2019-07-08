@@ -855,7 +855,7 @@ begin
 
       Describe('GetNifVector', procedure
         begin
-          It('Should resolve vectors as a JSON string', procedure
+          It('Should resolve vectors coordinates', procedure
             begin
               ExpectSuccess(GetNifVector(nif, 'bhkMoppBvTreeShape\Origin', @len));
               ExpectEqual(grs(len), '{"X":-2.16699957847595,"Y":-1.70599961280823,"Z":-0.949999749660492}');
@@ -874,7 +874,7 @@ begin
 
       Describe('SetNifVector', procedure
         begin
-          It('Should set vector coords', procedure
+          It('Should be able to set vector coords', procedure
             begin
               TestSetNifVector(nif, 'bhkMoppBvTreeShape\Origin', '{"X":2,"Y":1.25,"Z":-1.625}');
               TestSetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', '{"X":0,"Y":255,"Z":192}');

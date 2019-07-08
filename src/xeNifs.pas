@@ -17,8 +17,6 @@ function IsFileInContainer(const containerName, pathToFile: string): Boolean;
 
 function IsVector(element: TdfElement): Boolean;
 
-function CoordinatesToJSON(element: TdfElement): string;
-
 function ParseResolveReference(var key: String): Boolean;
 // Temporarily copied from xeElements.pas
 function ParseIndex(const key: string; var index: Integer): Boolean;
@@ -39,8 +37,6 @@ function ResolveElement(const element: TdfElement; const path: String): TdfEleme
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
 procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
-
-procedure SetCoordinates(const element: TdfElement; coords: TJSONObject);
 {$endregion}
 
 {$region 'API functions'}
@@ -71,7 +67,7 @@ function GetNifUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): Word
 function GetNifFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
 function SetNifFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
-function SetNifVector(_id: Cardinal; path, coordsJSON: PWideChar): WordBool; cdecl;
+function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 {$endregion}
 {$endregion}
 
@@ -142,26 +138,6 @@ end;
 function IsVector(element: TdfElement): Boolean;
 begin
   Result := (element.DataType = dtVector3) or (element.DataType = dtVector4);
-end;
-
-function CoordinatesToJSON(element: TdfElement): string;
-var
-  obj: TJSONObject;
-begin
-  obj := TJSONObject.Create;
-  try
-    if IsVector(element) then begin
-      obj.D['X'] := element.NativeValues['X'];
-      obj.D['Y'] := element.NativeValues['Y'];
-      obj.D['Z'] := element.NativeValues['Z'];
-      if element.DataType = dtVector4 then
-        obj.D['W'] := element.NativeValues['W'];
-    end;
-
-    Result := obj.ToString;
-  finally
-    obj.Free;
-  end;
 end;
 
 function ParseResolveReference(var key: String): Boolean;
@@ -387,17 +363,6 @@ begin
   end
   else
     raise Exception.Create('Element must be a Nif file or a Nif block.');
-end;
-
-procedure SetCoordinates(const element: TdfElement; coords: TJSONObject);
-begin
-  if IsVector(element) then begin
-    element.NativeValues['X'] := coords['X'].AsVariant;
-    element.NativeValues['Y'] := coords['Y'].AsVariant;
-    element.NativeValues['Z'] := coords['Z'].AsVariant;
-    if element.DataType = dtVector4 then
-      element.NativeValues['W'] := coords['W'].AsVariant;
-  end;
 end;
 {$endregion}
 
@@ -724,6 +689,7 @@ end;
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   element: TdfElement;
+  obj: TJSONObject;
 begin
   Result := False;
   try
@@ -731,31 +697,48 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not IsVector(element) then
       raise Exception.Create('Element is not a vector.');
-    resultStr := CoordinatesToJSON(element);
-    len^ := Length(resultStr);
-    Result := True;
+
+    obj := TJSONObject.Create;
+    try
+      obj.D['X'] := element.NativeValues['X'];
+      obj.D['Y'] := element.NativeValues['Y'];
+      obj.D['Z'] := element.NativeValues['Z'];
+      if element.DataType = dtVector4 then
+        obj.D['W'] := element.NativeValues['W'];
+
+      resultStr := obj.ToString;
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      obj.Free;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function SetNifVector(_id: Cardinal; path, coordsJSON: PWideChar): WordBool; cdecl;
+function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 var
   element: TdfElement;
-  coords: TJSONObject;
+  obj: TJSONObject;
 begin
   Result := False;
   try
-    coords := TJSONObject.Create(coordsJSON);
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not IsVector(element) then
+      raise Exception.Create('Element is not a vector.');
+
+    obj := TJSONObject.Create(coords);
     try
-      element := NativeGetNifElement(_id, path);
-      if NifElementNotFound(element, path) then exit;
-      if not IsVector(element) then
-        raise Exception.Create('Element is not a vector.');
-      SetCoordinates(element, coords);
+      element.NativeValues['X'] := obj['X'].AsVariant;
+      element.NativeValues['Y'] := obj['Y'].AsVariant;
+      element.NativeValues['Z'] := obj['Z'].AsVariant;
+      if element.DataType = dtVector4 then
+        element.NativeValues['W'] := obj['W'].AsVariant;
       Result := True;
     finally
-      coords.Free;
+      obj.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
