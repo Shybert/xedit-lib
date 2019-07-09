@@ -157,6 +157,14 @@ begin
   ExpectEqual(grs(len), string(coordsJSON));
 end;
 
+procedure TestGetNifFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(GetNifFlag(h, path, flag, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
 procedure TestGetNifEnumOptions(h: Cardinal; path: PWideChar; expectedOptions: string);
 var
   len: Integer;
@@ -936,6 +944,35 @@ begin
               ExpectFailure(GetNifQuaternion(nif, '', true, @len));
               ExpectFailure(GetNifQuaternion(nif, 'bhkMoppBvTreeShape\Origin', true, @len));
               ExpectFailure(GetNifQuaternion(nif, 'BSLightingShaderProperty\UV Offset', true, @len));
+            end);
+        end);
+
+      Describe('GetNifFlag', procedure
+        begin
+          It('Should return false for disabled flags', procedure
+            begin
+              TestGetNifFlag(nif, 'BSXFlags\Flags', 'Animated', false);
+              TestGetNifFlag(nif, 'BSTriShape\VertexDesc\VF', 'VF_COLORS', false);
+              TestGetNifFlag(nif, 'BSLightingShaderProperty\Shader Flags 1', 'Specular', false);
+            end);
+
+          It('Should return true for enabled flags', procedure
+            begin
+              TestGetNifFlag(nif, 'BSXFlags\Flags', 'Havok', true);
+              TestGetNifFlag(nif, 'BSTriShape\VertexDesc\VF', 'VF_VERTEX', true);
+              TestGetNifFlag(nif, 'BSLightingShaderProperty\Shader Flags 1', 'Cast_Shadows', true);
+            end);
+
+          It('Should fail if the flag is not found', procedure
+            begin
+              ExpectFailure(GetNifFlag(nif, 'BSLightingShaderProperty\Shader Flags 1', 'NonExistingFlag', @b));
+            end);
+
+          It('Should fail on elements that do not have flags', procedure
+            begin
+              ExpectFailure(GetNifFlag(nif, '', 'Test', @b));
+              ExpectFailure(GetNifFlag(rootNode, '', 'Enabled', @b));
+              ExpectFailure(GetNifFlag(nif, 'Header\Endian Type', 'ENDIAN_BIG', @b));
             end);
         end);
 
