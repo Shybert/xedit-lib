@@ -165,6 +165,15 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
+procedure TestSetNifFlag(h: Cardinal; path, flag: PWideChar; enable: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(SetNifFlag(h, path, flag, enable));
+  ExpectSuccess(GetNifFlag(h, path, flag, @b));
+  ExpectEqual(b, enable);
+end;
+
 procedure TestGetNifEnumOptions(h: Cardinal; path: PWideChar; expectedOptions: string);
 var
   len: Integer;
@@ -973,6 +982,35 @@ begin
               ExpectFailure(GetNifFlag(nif, '', 'Test', @b));
               ExpectFailure(GetNifFlag(rootNode, '', 'Enabled', @b));
               ExpectFailure(GetNifFlag(nif, 'Header\Endian Type', 'ENDIAN_BIG', @b));
+            end);
+        end);
+
+      Describe('SetNifFlag', procedure
+        begin
+          It('Should enable disabled flags', procedure
+            begin
+              TestSetNifFlag(nif, 'BSXFlags\Flags', 'Animated', true);
+              TestSetNifFlag(nif, 'BSTriShape\VertexDesc\VF', 'VF_COLORS', true);
+              TestSetNifFlag(nif, 'BSLightingShaderProperty\Shader Flags 1', 'Specular', true);
+            end);
+
+          It('Should disable enabled flags', procedure
+            begin
+              TestSetNifFlag(nif, 'BSXFlags\Flags', 'Havok', false);
+              TestSetNifFlag(nif, 'BSTriShape\VertexDesc\VF', 'VF_VERTEX', false);
+              TestSetNifFlag(nif, 'BSLightingShaderProperty\Shader Flags 1', 'Cast_Shadows', false);
+            end);
+
+          It('Should fail if the flag is not found', procedure
+            begin
+              ExpectFailure(SetNifFlag(nif, 'BSLightingShaderProperty\Shader Flags 1', 'NonExistingFlag', true));
+            end);
+
+          It('Should fail on elements that do not have flags', procedure
+            begin
+              ExpectFailure(SetNifFlag(nif, '', 'Test', true));
+              ExpectFailure(SetNifFlag(rootNode, '', 'Enabled', true));
+              ExpectFailure(SetNifFlag(nif, 'Header\Endian Type', 'ENDIAN_BIG', true));
             end);
         end);
 

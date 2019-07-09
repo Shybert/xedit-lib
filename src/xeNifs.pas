@@ -71,6 +71,7 @@ function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; 
 function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
 function GetNifFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
+function SetNifFlag(_id: Cardinal; path, name: PWideChar; enable: WordBool): WordBool; cdecl;
 function GetNifEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 {$endregion}
 {$endregion}
@@ -807,6 +808,27 @@ begin
       raise Exception.Create('Element does not have flags');
     if TdfFlagsDef(element.Def).IndexOfValue(name) <> -1 then begin
       enabled^ := element.NativeValues[name];
+      Result := True;
+    end
+    else
+      SoftException('Flag "' + name + '" not found.');
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetNifFlag(_id: Cardinal; path, name: PWideChar; enable: WordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not (element.Def is TdfFlagsDef) then
+      raise Exception.Create('Element does not have flags');
+    if TdfFlagsDef(element.Def).IndexOfValue(name) <> -1 then begin
+      element.NativeValues[name] := enable;
       Result := True;
     end
     else
