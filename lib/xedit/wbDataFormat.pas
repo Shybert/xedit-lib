@@ -469,7 +469,6 @@ type
     FValuesMap: array of TMappedValue;
     function GetValuesMapCount: Integer;
     function IndexOfKey(const aKey: Int64): integer;
-    function IndexOfValue(const aValue: string): integer;
     function GetKey(Index: integer): Int64;
     function GetValue(Index: integer): string;
     function GetValueByKey(Key: Int64): string;
@@ -478,6 +477,7 @@ type
     procedure Assign(const aDef: TdfDef); override;
     procedure AssignValuesMap(const aValuesMap: array of const); virtual;
     property ValuesMapCount: Integer read GetValuesMapCount;
+    function IndexOfValue(const aValue: string): integer;
     property Keys[Index: integer]: Int64 read GetKey;
     property Values[Index: integer]: string read GetValue;
     property KeyValues[Key: Int64]: string read GetValueByKey;
