@@ -54,7 +54,7 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
-procedure TestGetBlocks(h: Cardinal; path, search: PWideChar; expectedCount: Integer);
+procedure TestGetNifBlocks(h: Cardinal; path, search: PWideChar; expectedCount: Integer);
 var
   len: Integer;
   a: CardinalArray;
@@ -62,7 +62,7 @@ var
 begin
   if path <> '' then
     ExpectSuccess(GetNifElement(h, path, @h));
-  ExpectSuccess(GetBlocks(h, search, @len));
+  ExpectSuccess(GetNifBlocks(h, search, @len));
   ExpectEqual(len, expectedCount);
   a := gra(len);
   for i := Low(a) to High(a) do
@@ -565,33 +565,39 @@ begin
               end);
           end);
 
-      Describe('GetBlocks', procedure
+      Describe('GetNifBlocks', procedure
         begin
           Describe('No search', procedure
-          begin
-            It('Should return all blocks in a Nif file', procedure
-              begin
-                TestGetBlocks(nif, '', '', 30);
-              end);
-            It('Should return all referenced blocks in a Nif block', procedure
-              begin
-                TestGetBlocks(nif, 'BSFadeNode', '', 9);
-                TestGetBlocks(nif, 'BSFurnitureMarkerNode', '', 0);
-              end);
-          end);
+            begin
+              It('Should return all blocks in a Nif file', procedure
+                begin
+                  TestGetNifBlocks(nif, '', '', 30);
+                end);
+              It('Should return all referenced blocks in a Nif block', procedure
+                begin
+                  TestGetNifBlocks(nif, 'BSFadeNode', '', 9);
+                  TestGetNifBlocks(nif, 'BSFurnitureMarkerNode', '', 0);
+                end);
+            end);
 
           Describe('Search', procedure
-          begin
-            It('Should return all blocks of a given block type in a Nif file', procedure
-              begin
-                TestGetBlocks(nif, '', 'BSTriShape', 7);
-              end);
-            It('Should return all referenced blocks of a given block type in a Nif block', procedure
-              begin
-                TestGetBlocks(nif, 'BSFadeNode', 'BSTriShape', 5);
-                TestGetBlocks(nif, 'BSFurnitureMarkerNode', 'BSTriShape', 0);
-              end);
-          end);
+            begin
+              It('Should return all blocks of a given block type in a Nif file', procedure
+                begin
+                  TestGetNifBlocks(nif, '', 'BSTriShape', 7);
+                end);
+              It('Should return all referenced blocks of a given block type in a Nif block', procedure
+                begin
+                  TestGetNifBlocks(nif, 'BSFadeNode', 'BSTriShape', 5);
+                  TestGetNifBlocks(nif, 'BSFurnitureMarkerNode', 'BSTriShape', 0);
+                end);
+            end);
+
+          It('Should fail if interface is neither a nif file nor a nif block', procedure
+            begin
+              ExpectFailure(GetNifBlocks(float, '', @len));
+              ExpectFailure(GetNifBlocks(ref, '', @len));
+            end);
         end);
 
       Describe('ElementCount', procedure

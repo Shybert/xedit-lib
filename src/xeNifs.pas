@@ -37,7 +37,7 @@ function ResolvePath(const element: TdfElement; const path: string): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
-procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
+procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 {$endregion}
 
 {$region 'API functions'}
@@ -49,7 +49,7 @@ function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal)
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
-function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -347,14 +347,12 @@ begin
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
 
-procedure NativeGetBlocks(_id: Cardinal; search: String; lst: TList);
+procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 var
-  element: TdfElement;
   allBlocks: Boolean;
   i: Integer;
   block: TwbNifBlock;
 begin
-  element := ResolveObjects(_id) as TdfElement;
   allBlocks := search = '';
 
   if element is TwbNifFile then begin
@@ -470,7 +468,7 @@ begin
   end;
 end;
 
-function GetBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 var
   lst: TList;
 begin
@@ -478,9 +476,9 @@ begin
   try
     lst := TList.Create;
     try
-      NativeGetBlocks(_id, String(search), lst);
+      NativeGetNifBlocks(ResolveObjects(_id) as TdfElement, String(search), lst);
       StoreObjectList(lst, len);
-    Result := True;
+      Result := True;
     finally
       lst.Free;
     end;
