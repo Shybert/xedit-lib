@@ -992,6 +992,32 @@ begin
             end);
         end);
 
+      Describe('GetEnabledNifFlags', procedure
+        begin
+          It('Should return an empty string if no flags are enabled', procedure
+            begin
+              // TODO
+            end);
+
+          It('Should return a comma separated string of flag names', procedure
+            begin
+              ExpectSuccess(GetEnabledNifFlags(nif, 'BSXFlags\Flags', @len));
+              ExpectEqual(grs(len), 'Havok,Articulated');
+              ExpectSuccess(GetEnabledNifFlags(nif, 'BSTriShape\VertexDesc\VF', @len));
+              ExpectEqual(grs(len), 'VF_VERTEX,VF_UV,VF_NORMAL,VF_TANGENT');
+              ExpectSuccess(GetEnabledNifFlags(nif, 'BSLightingShaderProperty\Shader Flags 2', @len));
+              ExpectEqual(grs(len), 'ZBuffer_Write,EnvMap_Light_Fade');
+            end);
+
+          It('Should fail on elements that do not have flags', procedure
+            begin
+              ExpectFailure(GetEnabledNifFlags(nif, '', @len));
+              ExpectFailure(GetEnabledNifFlags(rootNode, '', @len));
+              ExpectFailure(GetEnabledNifFlags(nif, 'Header\Endian Type', @len));
+            end);
+        end);
+
+
       Describe('SetNifFlag', procedure
         begin
           It('Should enable disabled flags', procedure
