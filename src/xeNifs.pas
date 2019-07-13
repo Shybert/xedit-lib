@@ -74,6 +74,7 @@ function GetNifFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): W
 function SetNifFlag(_id: Cardinal; path, name: PWideChar; enable: WordBool): WordBool; cdecl;
 function GetAllNifFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetEnabledNifFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function SetEnabledNifFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
 function GetNifEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 {$endregion}
 {$endregion}
@@ -895,6 +896,38 @@ begin
 
       resultStr := slFlags.DelimitedText;
       len^ := Length(resultStr);
+      Result := True;
+    finally
+      slFlags.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetEnabledNifFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
+var
+  slFlags: TStringList;
+  element: TdfElement;
+  i: Integer;
+  flagName: String;
+begin
+  Result := False;
+  try
+    slFlags := TStringList.Create;
+    slFlags.StrictDelimiter := True;
+    slFlags.Delimiter := ',';
+    slFlags.DelimitedText := flags;
+
+    try
+      element := NativeGetNifElement(_id, path);
+      if NifElementNotFound(element, path) then exit;
+      if not (element.Def is TdfFlagsDef) then
+        raise Exception.Create('Element does not have flags');
+      for i := 0 to Pred(TdfFlagsDef(element.Def).ValuesMapCount) do begin
+        flagName := TdfFlagsDef(element.Def).Values[i];
+        element.NativeValues[flagName] := slFlags.IndexOf(flagName) <> -1;
+      end;
       Result := True;
     finally
       slFlags.Free;
