@@ -1075,9 +1075,9 @@ begin
 
           It('Should fail on elements that do not have flags', procedure
             begin
-              ExpectFailure(SetNifFlag(nif, '', 'Test', true));
-              ExpectFailure(SetNifFlag(rootNode, '', 'Enabled', true));
-              ExpectFailure(SetNifFlag(nif, 'Header\Endian Type', 'ENDIAN_BIG', true));
+              ExpectFailure(GetAllNifFlags(nif, '', @len));
+              ExpectFailure(GetAllNifFlags(rootNode, '', @len));
+              ExpectFailure(GetAllNifFlags(nif, 'Header\Endian Type', @len));
             end);
         end);
 
