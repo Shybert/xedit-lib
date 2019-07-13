@@ -196,6 +196,7 @@ var
   h, nif, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3, c: Cardinal;
   len, i: Integer;
   f: Double;
+  str: String;
 begin
   Describe('Nif File Handling Functions', procedure
     begin
@@ -1010,6 +1011,40 @@ begin
           It('Should fail if the flag is not found', procedure
             begin
               ExpectFailure(SetNifFlag(nif, 'BSLightingShaderProperty\Shader Flags 1', 'NonExistingFlag', true));
+            end);
+
+          It('Should fail on elements that do not have flags', procedure
+            begin
+              ExpectFailure(SetNifFlag(nif, '', 'Test', true));
+              ExpectFailure(SetNifFlag(rootNode, '', 'Enabled', true));
+              ExpectFailure(SetNifFlag(nif, 'Header\Endian Type', 'ENDIAN_BIG', true));
+            end);
+        end);
+
+      Describe('GetAllNifFlags', procedure
+        begin
+          It('Should return a comma separated list of all flag names', procedure
+            begin
+              ExpectSuccess(GetAllNifFlags(nif, 'BSXFlags\Flags', @len));
+              str := grs(len);
+              Expect(Pos('Animated', str) = 1, 'Animated should be the first flag');
+              Expect(Pos('Ragdoll', str) > 0, 'Ragdoll should be included');
+              Expect(Pos('Editor Marker', str) > 0, 'Editor Marker should be included');
+              Expect(Pos('Articulated', str) > 0, 'Articulated should be included');
+
+              ExpectSuccess(GetAllNifFlags(nif, 'BSTriShape\VertexDesc\VF', @len));
+              str := grs(len);
+              Expect(Pos('VF_Unknown_0', str) = 1, 'VF_Unknown_0 should be the first flag');
+              Expect(Pos('VF_VERTEX', str) > 0, 'VF_VERTEX should be included');
+              Expect(Pos('VF_SKINNED', str) > 0, 'VF_SKINNED should be included');
+              Expect(Pos('VF_FULLPREC', str) > 0, 'VF_FULLPREC should be included');
+
+              ExpectSuccess(GetAllNifFlags(nif, 'BSLightingShaderProperty\Shader Flags 1', @len));
+              str := grs(len);
+              Expect(Pos('Specular', str) = 1, 'Specular should be the first flag');
+              Expect(Pos('Use_Falloff', str) > 0, 'Use_Falloff should be included');
+              Expect(Pos('Parallax', str) > 0, 'Parallax should be included');
+              Expect(Pos('Soft_Effect', str) > 0, 'Soft_Effect should be included');
             end);
 
           It('Should fail on elements that do not have flags', procedure
