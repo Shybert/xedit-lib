@@ -1005,7 +1005,9 @@ begin
         begin
           It('Should return an empty string if no flags are enabled', procedure
             begin
-              // TODO
+              ExpectSuccess(SetEnabledNifFlags(childrenArray, '@[3]\VertexDesc\VF', ''));
+              ExpectSuccess(GetEnabledNifFlags(childrenArray, '@[3]\VertexDesc\VF', @len));
+              ExpectEqual(grs(len), '');
             end);
 
           It('Should return a comma separated string of flag names', procedure
