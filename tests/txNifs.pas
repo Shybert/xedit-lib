@@ -202,7 +202,7 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, nif, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3, c: Cardinal;
+  h, nif, header, footer, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3, c: Cardinal;
   len, i: Integer;
   f: Double;
   str: String;
@@ -212,6 +212,8 @@ begin
       BeforeAll(procedure
         begin
           ExpectSuccess(LoadNif(PWideChar(GetDataPath + 'xtest-1.nif'), @nif));
+          ExpectSuccess(GetNifElement(nif, 'Header', @header));
+          ExpectSuccess(GetNifElement(nif, 'Footer', @footer));
           ExpectSuccess(GetNifElement(nif, 'BSFadeNode', @rootNode));
           ExpectSuccess(GetNifElement(rootNode, 'Children', @childrenArray));
           ExpectSuccess(GetNifElement(childrenArray, '[0]', @ref));
@@ -624,7 +626,7 @@ begin
 
           It('Should return the number of elements in a struct', procedure
             begin
-              ExpectSuccess(GetNifElement(nif, 'Header\Export Info', @h));
+              ExpectSuccess(GetNifElement(header, 'Export Info', @h));
               TestNifElementCount(h, 4);
             end);
 
@@ -997,7 +999,7 @@ begin
             begin
               ExpectFailure(GetNifFlag(nif, '', 'Test', @b));
               ExpectFailure(GetNifFlag(rootNode, '', 'Enabled', @b));
-              ExpectFailure(GetNifFlag(nif, 'Header\Endian Type', 'ENDIAN_BIG', @b));
+              ExpectFailure(GetNifFlag(header, 'Endian Type', 'ENDIAN_BIG', @b));
             end);
         end);
 
@@ -1024,7 +1026,7 @@ begin
             begin
               ExpectFailure(GetEnabledNifFlags(nif, '', @len));
               ExpectFailure(GetEnabledNifFlags(rootNode, '', @len));
-              ExpectFailure(GetEnabledNifFlags(nif, 'Header\Endian Type', @len));
+              ExpectFailure(GetEnabledNifFlags(header, 'Endian Type', @len));
             end);
         end);
 
@@ -1054,7 +1056,7 @@ begin
             begin
               ExpectFailure(SetNifFlag(nif, '', 'Test', true));
               ExpectFailure(SetNifFlag(rootNode, '', 'Enabled', true));
-              ExpectFailure(SetNifFlag(nif, 'Header\Endian Type', 'ENDIAN_BIG', true));
+              ExpectFailure(SetNifFlag(header, 'Endian Type', 'ENDIAN_BIG', true));
             end);
         end);
 
@@ -1079,7 +1081,7 @@ begin
             begin
               ExpectFailure(SetEnabledNifFlags(nif, '', @len));
               ExpectFailure(SetEnabledNifFlags(rootNode, '', @len));
-              ExpectFailure(SetEnabledNifFlags(nif, 'Header\Endian Type', @len));
+              ExpectFailure(SetEnabledNifFlags(header, 'Endian Type', @len));
             end);
         end);
 
@@ -1113,7 +1115,7 @@ begin
             begin
               ExpectFailure(GetAllNifFlags(nif, '', @len));
               ExpectFailure(GetAllNifFlags(rootNode, '', @len));
-              ExpectFailure(GetAllNifFlags(nif, 'Header\Endian Type', @len));
+              ExpectFailure(GetAllNifFlags(header, 'Endian Type', @len));
             end);
         end);
 
@@ -1121,7 +1123,7 @@ begin
         begin
           It('Should return a comma seperated list of enum options', procedure
             begin
-              TestGetNifEnumOptions(nif, 'Header\Endian Type', 'ENDIAN_BIG,ENDIAN_LITTLE');
+              TestGetNifEnumOptions(header, 'Endian Type', 'ENDIAN_BIG,ENDIAN_LITTLE');
               TestGetNifEnumOptions(nif, 'bhkRigidBody\Broad Phase Type', 'BROAD_PHASE_INVALID,BROAD_PHASE_ENTITY,BROAD_PHASE_PHANTOM,BROAD_PHASE_BORDER');
               TestGetNifEnumOptions(nif, 'BSLightingShaderProperty\Texture Clamp Mode', 'CLAMP_S_CLAMP_T,CLAMP_S_WRAP_T,WRAP_S_CLAMP_T,WRAP_S_WRAP_T');
             end);
@@ -1138,8 +1140,7 @@ begin
         begin
           It('Should return true if the element is a nif header', procedure
             begin
-              ExpectSuccess(GetNifElement(nif, 'Header', @h));
-              ExpectSuccess(IsNifHeader(h, @b));
+              ExpectSuccess(IsNifHeader(header, @b));
               ExpectEqual(b, true);
             end);
 
@@ -1158,8 +1159,7 @@ begin
         begin
           It('Should return true if the element is a nif footer', procedure
             begin
-              ExpectSuccess(GetNifElement(nif, 'Footer', @h));
-              ExpectSuccess(IsNifFooter(h, @b));
+              ExpectSuccess(IsNifFooter(footer, @b));
               ExpectEqual(b, true);
             end);
 
