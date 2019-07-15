@@ -38,6 +38,9 @@ function ResolveElement(const element: TdfElement; const path: String): TdfEleme
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
 procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
+
+function NativeIsNifHeader(const element: TdfElement): Boolean;
+function NativeIsNifFooter(const element: TdfElement): Boolean;
 {$endregion}
 
 {$region 'API functions'}
@@ -77,6 +80,9 @@ function GetEnabledNifFlags(_id: Cardinal; path: PWideChar; len: PInteger): Word
 function SetEnabledNifFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
 function GetNifEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 {$endregion}
+
+function IsNifHeader(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+function IsNifFooter(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 {$endregion}
 
 implementation
@@ -375,6 +381,15 @@ begin
   end
   else
     raise Exception.Create('Element must be a Nif file or a Nif block.');
+end;
+
+function NativeIsNifHeader(const element: TdfElement): Boolean;
+begin
+  Result := element is TwbNifBlock and (TwbNifBlock(element).BlockType = 'NiHeader')
+end;
+function NativeIsNifFooter(const element: TdfElement): Boolean;
+begin
+  Result := element is TwbNifBlock and (TwbNifBlock(element).BlockType = 'NiFooter')
 end;
 {$endregion}
 
@@ -968,6 +983,34 @@ begin
   end;
 end;
 {$endregion}
+
+function IsNifHeader(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    bool^ := NativeIsNifHeader(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsNifFooter(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    bool^ := NativeIsNifFooter(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
 {$endregion}
 
 end.

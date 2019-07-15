@@ -1133,6 +1133,46 @@ begin
               ExpectFailure(GetNifEnumOptions(nif, 'BSTriShape\Flags', @len));
             end);
         end);
+
+      Describe('IsNifHeader', procedure
+        begin
+          It('Should return true if the element is a nif header', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'Header', @h));
+              ExpectSuccess(IsNifHeader(h, @b));
+              ExpectEqual(b, true);
+            end);
+
+          It('Should return false if the element isn''t a nif header', procedure
+            begin
+              ExpectSuccess(IsNifHeader(nif, @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(IsNifHeader(rootNode, @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(IsNifHeader(vector, @b));
+              ExpectEqual(b, false);
+            end);
+        end);
+
+      Describe('IsNifFooter', procedure
+        begin
+          It('Should return true if the element is a nif footer', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'Footer', @h));
+              ExpectSuccess(IsNifFooter(h, @b));
+              ExpectEqual(b, true);
+            end);
+
+          It('Should return false if the element isn''t a nif footer', procedure
+            begin
+              ExpectSuccess(IsNifFooter(nif, @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(IsNifFooter(rootNode, @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(IsNifFooter(vector, @b));
+              ExpectEqual(b, false);
+            end);
+        end);        
   end);
 end;
 end.
