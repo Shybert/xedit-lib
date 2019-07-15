@@ -55,6 +55,7 @@ function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): Word
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
+function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
@@ -531,6 +532,22 @@ begin
     element2 := ResolveObjects(_id2) as TdfElement;
     if NifElementNotFound(element2, '') then exit;
     bool^ := element.Equals(element2);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    if (element is TwbNifFile) or NativeIsNifHeader(element) or NativeIsNifFooter(element) then
+      raise Exception.Create('Unable to get the index of nif files, nif headers, and nif footers.');
+    index^ := element.Index;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

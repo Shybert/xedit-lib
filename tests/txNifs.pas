@@ -93,6 +93,16 @@ begin
   TestNifElementEquals(element1, element2, expectedValue);
 end;
 
+procedure TestGetNifElementIndex(h: Cardinal; path: PWideChar; expectedIndex: Integer);
+var
+  element: Cardinal;
+  i: integer;
+begin
+  ExpectSuccess(GetNifElement(h, path, @element));
+  ExpectSuccess(GetNifElementIndex(element, @i));
+  ExpectEqual(i, expectedIndex);
+end;
+
 procedure TestGetNifElementFile(h, expectedNif: Cardinal);
 var
   nif: Cardinal;
@@ -672,6 +682,48 @@ begin
           It('Should fail if the handles are unassigned', procedure
             begin
               ExpectFailure(NifElementEquals($FFFFFF, 999999, @b));
+            end);
+        end);
+
+      Describe('GetNifElementIndex', procedure
+        begin
+          It('Should return the index of blocks', procedure
+            begin
+              TestGetNifElementIndex(rootNode, '', 0);
+              TestGetNifElementIndex(nif, 'BSTriShape', 9);
+            end);
+
+          It('Should return the index of block elements', procedure
+            begin
+              TestGetNifElementIndex(transformStruct, '', 5);
+              TestGetNifElementIndex(childrenArray, '', 11);
+            end);
+
+          It('Should return the index of elements in a struct', procedure
+            begin
+              TestGetNifElementIndex(header, 'Export Info\Export Script', 3);
+              TestGetNifElementIndex(transformStruct, 'Rotation', 1);
+            end);
+
+          It('Should return the index of elements in arrays', procedure
+            begin
+              TestGetNifElementIndex(childrenArray, '[2]', 2);
+              TestGetNifElementIndex(nif, 'BSShaderTextureSet\Textures\[4]', 4);
+            end);
+
+          It('Should fail if the element is a nif file', procedure
+            begin
+              ExpectFailure(GetNifElementIndex(nif, @i));
+            end);
+
+          It('Should fail if the element is a nif header', procedure
+            begin
+              ExpectFailure(GetNifElementIndex(header, @i));
+            end);
+
+          It('Should fail if the element is a nif footer', procedure
+            begin
+              ExpectFailure(GetNifElementIndex(footer, @i));
             end);
         end);
 
