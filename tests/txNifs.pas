@@ -54,6 +54,17 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
+procedure TestRemoveNifBlock(h: Cardinal; path: PWideChar; testPresence: Boolean = True);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(RemoveNifBlock(h, path));
+  if testPresence then begin
+    ExpectSuccess(HasNifElement(h, path, @b));
+    Expect(not b, 'The element should no longer be present');
+  end;
+end;
+
 procedure TestGetNifBlocks(h: Cardinal; path, search: PWideChar; expectedCount: Integer);
 var
   len: Integer;
@@ -212,7 +223,7 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, nif, header, footer, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3, c: Cardinal;
+  h, h2, nif, header, footer, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3, c: Cardinal;
   len, i: Integer;
   f: Double;
   str: String;
@@ -584,6 +595,61 @@ begin
             It('Should fail if the handle isn''t a nif file', procedure
               begin
                 ExpectFailure(AddNifBlock(rootNode, 'BSFadeNode', @h));
+              end);
+          end);
+
+        Describe('RemoveNifBlock', procedure
+          begin
+            BeforeAll(procedure
+              begin
+                ExpectSuccess(LoadNif('xtest-1.nif', @h));
+              end);
+
+            It('Should be able to remove blocks', procedure
+              begin
+                TestRemoveNifBlock(h, 'bhkCollisionObject');
+              end);
+
+            It('Should clear links referencing the removed block', procedure
+              begin
+                TestRemoveNifBlock(h, 'bhkCompressedMeshShapeData');
+                ExpectFailure(GetNifElement(h, 'bhkCompressedMeshShape\@Data', @h2));
+                ExpectSuccess(GetNifIntValue(h, 'bhkCompressedMeshShape\Data', @i));
+                ExpectEqual(i, -1);
+              end);
+
+            It('Should remap blocks', procedure
+              begin
+                TestRemoveNifBlock(h, 'bhkCompressedMeshShape');
+                TestGetNifElementIndex(h, 'BSXFlags', 2); // Same as before, only blocks after this block have been removed
+                TestGetNifElementIndex(h, 'BSTriShape', 6); // Used to be 9, 3 prior blocks have been removed
+              end);
+
+            It('Should remove the block passed if no path is given', procedure
+              begin
+                ExpectSuccess(GetNifElement(h, 'bhkMoppBvTreeShape', @h2));
+                ExpectSuccess(RemoveNifBlock(h2, ''));
+                ExpectSuccess(HasNifElement(h, 'bhkMoppBvTreeShape', @b));
+                Expect(not b, 'The element should no longer be present');
+              end);
+
+            It('Should not be able to remove the header', procedure
+              begin
+                ExpectFailure(RemoveNifBlock(h, 'Header'));
+                TestHasNifElement(h, 'Header');
+              end);
+
+            It('Should not be able to remove the footer', procedure
+              begin
+                ExpectFailure(RemoveNifBlock(h, 'Footer'));
+                TestHasNifElement(h, 'Footer');
+              end);
+
+            It('Should fail if the element is not a nif block', procedure
+              begin
+                ExpectFailure(RemoveNifBlock(h, ''));
+                ExpectFailure(RemoveNifBlock(h, 'BSFadeNode\Name'));
+                ExpectFailure(RemoveNifBlock(h, 'BSFadeNode\Children\[0]'));
               end);
           end);
 

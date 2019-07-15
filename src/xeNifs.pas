@@ -52,6 +52,7 @@ function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal)
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
+function RemoveNifBlock(_id: Cardinal; path: PWideChar): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -481,6 +482,24 @@ begin
     if not (element is TwbNifFile) then
       raise Exception.Create('Interface must be a nif file.');
     _res^ := StoreObjects((element as TwbNifFile).AddBlock(blockType));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RemoveNifBlock(_id: Cardinal; path: PWideChar): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if not (element is TwbNifBlock) then
+      raise Exception.Create('Interface must be a nif block.');
+    if NativeIsNifHeader(element) or NativeIsNifFooter(element) then
+      raise Exception.Create('The header and the footer of a nif file cannot be removed.');
+    TwbNifBlock(element).NifFile.Delete(element.Index);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
