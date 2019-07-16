@@ -37,6 +37,7 @@ function ResolvePath(const element: TdfElement; const path: string): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
+procedure NativeRemoveNifBlock(block: TwbNifBlock; recursive: WordBool);
 procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 
 function NativeIsNifHeader(const element: TdfElement): Boolean;
@@ -52,7 +53,7 @@ function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal)
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
-function RemoveNifBlock(_id: Cardinal; path: PWideChar): WordBool; cdecl;
+function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -358,6 +359,22 @@ begin
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
 
+procedure NativeRemoveNifBlock(block: TwbNifBlock; recursive: WordBool);
+var
+  i: Integer;
+  ref: TwbNiRef;
+begin
+  if recursive then begin
+    for i := 0 to Pred(block.RefsCount) do begin
+      ref := block.Refs[i];
+      if Assigned(ref.LinksTo()) and not ref.Ptr then
+        NativeRemoveNifBlock(ref.LinksTo as TwbNifBlock, True);
+    end;
+  end;
+
+  block.NifFile.Delete(block.Index);
+end;
+
 procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 var
   allBlocks: Boolean;
@@ -488,7 +505,7 @@ begin
   end;
 end;
 
-function RemoveNifBlock(_id: Cardinal; path: PWideChar): WordBool; cdecl;
+function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 var
   element: TdfElement;
 begin
@@ -499,7 +516,7 @@ begin
       raise Exception.Create('Interface must be a nif block.');
     if NativeIsNifHeader(element) or NativeIsNifFooter(element) then
       raise Exception.Create('The header and the footer of a nif file cannot be removed.');
-    TwbNifBlock(element).NifFile.Delete(element.Index);
+    NativeRemoveNifBlock(TwbNifBlock(element), recursive);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
