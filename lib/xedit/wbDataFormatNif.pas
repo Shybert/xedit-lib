@@ -4797,7 +4797,7 @@ procedure wbDefinebhkNiCollisionObject;
 begin
   wbNiObject(wbNifBlock('bhkNiCollisionObject', [
     wbbhkCOFlags('Flags', 'ACTIVE', []),
-    wbNiPtr('Body', 'bhkWorldObject')
+    wbNiRef('Body', 'bhkWorldObject')
   ]), 'NiCollisionObject', True);
 end;
 
