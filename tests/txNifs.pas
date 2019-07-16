@@ -642,9 +642,8 @@ begin
                 It('Should not remove NiPtr type linked blocks in the removed block', procedure
                   begin
                     TestRemoveNifBlock(h, 'bhkCollisionObject', True);
-                    TestNifElementCount(h, 21);
+                    TestNifElementCount(h, 20);
                     TestHasNifElement(h, 'BSFadeNode');
-                    TestHasNifElement(h, 'bhkRigidBody');
                   end);
               end);
 
