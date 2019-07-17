@@ -56,6 +56,7 @@ function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): Word
 function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+function SetNifLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
@@ -563,6 +564,29 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+
+function SetNifLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool; cdecl;
+var
+  element, element2: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if not (element is TwbNiRef) then
+      raise Exception.Create('Element cannot hold references.');
+    element2 := ResolveObjects(_id2) as TdfElement;
+    if not (element2 is TwbNifBlock) then
+      raise Exception.Create('Second interface is not a block.');
+    if not wbIsNiObject(element2, TwbNiRef(element).Template) then
+      raise Exception.Create('Element cannot hold a reference to the block type "' + TwbNifBlock(element2).BlockType + '".');
+
+    element.NativeValue := element2.Index;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var

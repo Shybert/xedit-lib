@@ -743,6 +743,33 @@ begin
             end);
         end);
 
+      Describe('SetNifLinksTo', procedure
+        begin
+          It('Should set references', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'NiNode', @h));
+              ExpectSuccess(SetNifLinksTo(childrenArray, '[-1]', h));
+              TestGetNifLinksTo(childrenArray, '[-1]', h);
+            end);
+
+          It('Should fail if the first element cannot hold a reference', procedure
+            begin
+              ExpectFailure(SetNifLinksTo(nif, '', h));
+              ExpectFailure(SetNifLinksTo(rootNode, '', h));
+              ExpectFailure(SetNifLinksTo(vector, '', h));
+            end);
+
+          It('Should fail if the first element cannot hold a reference to the second element''s block type', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape', @h));
+              ExpectFailure(SetNifLinksTo(rootNode, 'Controller', h));
+            end);
+
+          It('Should fail if the second element isn''t a block', procedure
+            begin
+              ExpectFailure(SetNifLinksTo(childrenArray, '[0]', vector));
+            end);
+        end);
 
       Describe('ElementCount', procedure
         begin
