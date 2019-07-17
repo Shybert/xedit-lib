@@ -551,7 +551,6 @@ begin
   Result := False;
   try
     element := NativeGetNifElement(_id, path);
-    if NifElementNotFound(element, path) then exit;
     if not (element is TwbNiRef) then
       raise Exception.Create('Element cannot hold references.');
     linkedElement := element.LinksTo;
