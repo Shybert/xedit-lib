@@ -55,6 +55,7 @@ function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBoo
 function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
 function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
@@ -537,6 +538,27 @@ begin
     finally
       lst.Free;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element, linkedElement: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not (element is TwbNiRef) then
+      raise Exception.Create('Element cannot hold references.');
+    linkedElement := element.LinksTo;
+    if not Assigned(linkedElement) then
+      _res^ := 0
+    else
+      _res^ := StoreObjects(linkedElement);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

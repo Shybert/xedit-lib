@@ -102,6 +102,15 @@ begin
   TestNifElementEquals(element1, element2, expectedValue);
 end;
 
+procedure TestGetNifLinksTo(h: Cardinal; path: PWideChar; expectedBlock: Cardinal);
+var
+  block: Cardinal;
+begin
+  ExpectSuccess(GetNifLinksTo(h, path, @block));
+  Expect(block > 0, 'Handle should be greater than 0');
+  TestNifElementEquals(block, expectedBlock);
+end;
+
 procedure TestGetNifElementIndex(h: Cardinal; path: PWideChar; expectedIndex: Integer);
 var
   element: Cardinal;
@@ -701,6 +710,39 @@ begin
               ExpectFailure(GetNifBlocks(ref, '', @len));
             end);
         end);
+
+      Describe('GetNifLinksTo', procedure
+        begin
+          It('Should return the referenced block', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'bhkCollisionObject\@Target', @h));
+              TestGetNifLinksTo(nif, 'bhkCollisionObject\Target', h);
+              ExpectSuccess(GetNifElement(nif, 'bhkCollisionObject\@Body', @h));
+              TestGetNifLinksTo(nif, 'bhkCollisionObject\Body', h);
+            end);
+
+          It('Should return 0 if called on a None reference or an invalid reference', procedure
+            begin
+              ExpectSuccess(GetNifLinksTo(rootNode, 'Controller', @h));
+              ExpectEqual(h, 0);
+              ExpectSuccess(SetNifIntValue(rootNode, 'Controller', 99));
+              ExpectSuccess(GetNifLinksTo(rootNode, 'Controller', @h2));
+              ExpectEqual(h2, 0);
+            end);
+
+          It('Should fail if path is invalid', procedure
+            begin
+              ExpectFailure(GetNifLinksTo(childrenArray, '[-2]', @h));
+            end);
+
+          It('Should fail on elements that cannot hold a reference', procedure
+            begin
+              ExpectFailure(GetNifLinksTo(nif, '', @h));
+              ExpectFailure(GetNifLinksTo(rootNode, '', @h));
+              ExpectFailure(GetNifLinksTo(vector, '', @h));
+            end);
+        end);
+
 
       Describe('ElementCount', procedure
         begin
