@@ -64,6 +64,7 @@ function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
 function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function IsNiPtr(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -680,6 +681,22 @@ begin
       raise Exception.Create('Element must be a reference.');
     resultStr := TwbNiRef(element).Template;
     len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsNiPtr(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if not (element is TwbNiRef) then
+      raise Exception.Create('Element must be a reference.');
+    bool^ := TwbNiRef(element).Ptr;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

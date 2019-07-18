@@ -935,6 +935,32 @@ begin
             end);
         end);
 
+      Describe('IsNiPtr', procedure
+        begin
+          It('Should return true if the reference is a NiPtr', procedure
+            begin
+              ExpectSuccess(IsNiPtr(nif, 'bhkCompressedMeshShape\Target', @b));
+              ExpectEqual(b, true);
+              ExpectSuccess(IsNiPtr(nif, 'bhkCollisionObject\Target', @b));
+              ExpectEqual(b, true);
+            end);
+
+          It('Should return false if the reference is a NiRef', procedure
+            begin
+              ExpectSuccess(IsNiPtr(ref, '', @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(IsNiPtr(rootNode, 'Controller', @b));
+              ExpectEqual(b, false);
+            end);
+
+          It('Should fail if the input isn''t a reference', procedure
+            begin
+              ExpectFailure(IsNiPtr(nif, '', @len));
+              ExpectFailure(IsNiPtr(rootNode, '', @len));
+              ExpectFailure(IsNiPtr(vector, '', @len));
+            end);
+        end);
+
       Describe('GetNifName', procedure
         begin
           It('Should return true if file handle is valid', procedure
