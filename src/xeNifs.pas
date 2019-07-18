@@ -579,7 +579,7 @@ begin
     element2 := ResolveObjects(_id2) as TdfElement;
     if not (element2 is TwbNifBlock) then
       raise Exception.Create('Second interface is not a block.');
-    if not wbIsNiObject(element2, TwbNiRef(element).Template) then
+    if not TwbNifBlock(element2).IsNiObject(TwbNiRef(element).Template) then
       raise Exception.Create('Element cannot hold a reference to the block type "' + TwbNifBlock(element2).BlockType + '".');
 
     element.NativeValue := element2.Index;
