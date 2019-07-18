@@ -917,6 +917,24 @@ begin
             end);
         end);
 
+      Describe('GetNifTemplate', procedure
+        begin
+          It('Should resolve the template of references', procedure
+            begin
+              ExpectSuccess(GetNifTemplate(ref, '', @len));
+              ExpectEqual(grs(len), 'NiAVObject');
+              ExpectSuccess(GetNifTemplate(rootNode, 'Controller', @len));
+              ExpectEqual(grs(len), 'NiTimeController');
+            end);
+
+          It('Should fail if the input isn''t a reference', procedure
+            begin
+              ExpectFailure(GetNifTemplate(nif, '', @len));
+              ExpectFailure(GetNifTemplate(rootNode, '', @len));
+              ExpectFailure(GetNifTemplate(vector, '', @len));
+            end);
+        end);
+
       Describe('GetNifName', procedure
         begin
           It('Should return true if file handle is valid', procedure

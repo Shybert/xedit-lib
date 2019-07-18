@@ -63,6 +63,8 @@ function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
+function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+
 //Properties
 function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 function GetNifBlockType(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -661,6 +663,23 @@ begin
     if not (element is TwbNifBlock) then
       raise Exception.Create('Element is not contained in a nif block.');
     _res^ := StoreObjects(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if not (element is TwbNiRef) then
+      raise Exception.Create('Element must be a reference.');
+    resultStr := TwbNiRef(element).Template;
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
