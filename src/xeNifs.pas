@@ -42,6 +42,8 @@ procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 
 function NativeIsNifHeader(const element: TdfElement): Boolean;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
+
+function MergedElementToJSON(const element: TdfMerge): String;
 {$endregion}
 
 {$region 'API functions'}
@@ -414,6 +416,22 @@ end;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
 begin
   Result := element is TwbNifBlock and (TwbNifBlock(element).BlockType = 'NiFooter')
+end;
+
+function MergedElementToJSON(const element: TdfMerge): String;
+var
+  obj: TJSONObject;
+  i: Integer;
+begin
+  obj := TJSONObject.Create;
+  try
+    with TdfMergeDef(element.Def) do
+    for i := Low(Defs) to High(Defs) do
+      obj.D[Defs[i].Name] := element.NativeValues[Defs[i].Name];
+    Result := obj.ToString;
+  finally
+    obj.Free;
+  end;
 end;
 {$endregion}
 
@@ -850,7 +868,6 @@ end;
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   element: TdfElement;
-  obj: TJSONObject;
 begin
   Result := False;
   try
@@ -859,20 +876,9 @@ begin
     if not IsVector(element) then
       raise Exception.Create('Element is not a vector.');
 
-    obj := TJSONObject.Create;
-    try
-      obj.D['X'] := element.NativeValues['X'];
-      obj.D['Y'] := element.NativeValues['Y'];
-      obj.D['Z'] := element.NativeValues['Z'];
-      if element.DataType = dtVector4 then
-        obj.D['W'] := element.NativeValues['W'];
-
-      resultStr := obj.ToString;
-      len^ := Length(resultStr);
-      Result := True;
-    finally
-      obj.Free;
-    end;
+    resultStr := MergedElementToJSON(element as TdfMerge);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
