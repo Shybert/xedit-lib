@@ -44,6 +44,7 @@ function NativeIsNifHeader(const element: TdfElement): Boolean;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
 
 function MergedElementToJSON(const element: TdfMerge): String;
+procedure SetMergedElement(const element: TdfMerge; const json: String);
 {$endregion}
 
 {$region 'API functions'}
@@ -429,6 +430,27 @@ begin
     for i := Low(Defs) to High(Defs) do
       obj.D[Defs[i].Name] := element.NativeValues[Defs[i].Name];
     Result := obj.ToString;
+  finally
+    obj.Free;
+  end;
+end;
+
+procedure SetMergedElement(const element: TdfMerge; const json: String);
+var
+  obj: TJSONObject;
+  i: Integer;
+begin
+  obj := TJSONObject.Create(json);
+  try
+    with TdfMergeDef(element.Def) do
+    for i := Low(Defs) to High(Defs) do begin
+      if not obj.HasKey(Defs[i].Name) then
+        raise Exception.Create('JSON is missing a "' + Defs[i].Name + '" property.');
+      if not (obj[Defs[i].Name].JSONValueType in [jtDouble, jtInt]) then
+        raise Exception.Create('The value of property "' + Defs[i].Name + '" is not a number.');
+
+      element.NativeValues[Defs[i].Name] := obj[Defs[i].Name].AsVariant;
+    end;
   finally
     obj.Free;
   end;
@@ -887,7 +909,6 @@ end;
 function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 var
   element: TdfElement;
-  obj: TJSONObject;
 begin
   Result := False;
   try
@@ -895,18 +916,8 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not IsVector(element) then
       raise Exception.Create('Element is not a vector.');
-
-    obj := TJSONObject.Create(coords);
-    try
-      element.NativeValues['X'] := obj['X'].AsVariant;
-      element.NativeValues['Y'] := obj['Y'].AsVariant;
-      element.NativeValues['Z'] := obj['Z'].AsVariant;
-      if element.DataType = dtVector4 then
-        element.NativeValues['W'] := obj['W'].AsVariant;
-      Result := True;
-    finally
-      obj.Free;
-    end;
+    SetMergedElement(element as TdfMerge, coords);
+    Result := True
   except
     on x: Exception do ExceptionHandler(x);
   end;

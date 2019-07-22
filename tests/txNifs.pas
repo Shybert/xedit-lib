@@ -1162,26 +1162,35 @@ begin
 
       Describe('SetNifVector', procedure
         begin
-          It('Should be able to set vector coords', procedure
+          It('Should be able to set vector coordinates', procedure
             begin
               TestSetNifVector(nif, 'bhkMoppBvTreeShape\Origin', '{"X":2,"Y":1.25,"Z":-1.625}');
               TestSetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', '{"X":0,"Y":255,"Z":192}');
               TestSetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":8.15625,"Y":-25,"Z":-29.78125,"W":1.25}');
             end);
 
-          It('Should support coords in any order', procedure
+          It('Should support coordinates in any order', procedure
             begin
               SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', '{"W":0.625,"Y":29.1953125,"X":5.625,"Z":7.125}');
               GetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', @len);
               ExpectEqual(grs(len), '{"X":5.625,"Y":29.1953125,"Z":7.125,"W":0.625}');
             end);
 
-          It('Should fail if the passed JSON is invalid', procedure
+          It('Should fail if the JSON is missing coordinates', procedure
             begin
-              ExpectFailure(SetNifVector(nif, 'bhkMoppBvTreeShape\Origin', 'Wrong'));
-              ExpectFailure(SetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', '{"B":0,"Y":255,"Z":192}'));
-              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":"Not a number","Y":-3.25,"Z":-29.78125,"W":1.25}'));
-              ExpectFailure(SetNifVector(nif, 'bhkRigidBody\Translation', '{"X": 1.0, "Y": 1.0, "Z": 1.0}')); // Missing W coord
+              ExpectFailure(SetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', '{"Y":255,"Z":192}'));
+              ExpectFailure(SetNifVector(nif, 'bhkRigidBody\Translation', '{"X": 1.0, "Y": 1.0, "Z": 1.0}'));
+            end);
+
+          It('Should fail if the JSON values are invalid', procedure
+            begin
+              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":True,"Y":-3.25,"Z":-29.78125,"W":1.25}'));
+              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":[],"Y":-3.25,"Z":-29.78125,"W":1.25}'));
+            end);
+
+          It('Should fail if the JSON is invalid', procedure
+            begin
+              ExpectFailure(SetNifVector(nif, 'bhkMoppBvTreeShape\Origin', 'Invalid'));
             end);
 
           It('Should fail if the element isn''t a vector', procedure
