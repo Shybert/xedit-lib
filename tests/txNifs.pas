@@ -1202,6 +1202,24 @@ begin
             end);
         end);
 
+      Describe('GetNifTriangle', procedure
+        begin
+          It('Should resolve triangle vertex indices', procedure
+            begin
+              ExpectSuccess(GetNifTriangle(nif, 'BSTriShape\Triangles\[5]', @len));
+              ExpectEqual(grs(len), '{"V1":10,"V2":9,"V3":6}');
+              ExpectSuccess(GetNifTriangle(nif, 'BSTriShape\Triangles\[11]', @len));
+              ExpectEqual(grs(len), '{"V1":12,"V2":16,"V3":17}');
+            end);
+
+          It('Should fail if the element isn''t a triangle', procedure
+            begin
+              ExpectFailure(GetNifVector(nif, '', @len));
+              ExpectFailure(GetNifVector(rootNode, '', @len));
+              ExpectFailure(GetNifVector(nif, 'bhkRigidBody\Rotation', @len));
+            end);
+        end);
+
       Describe('GetNifQuaternion', procedure
         begin
           BeforeAll(procedure

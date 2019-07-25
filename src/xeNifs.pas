@@ -17,6 +17,7 @@ function IsFileInContainer(const containerName, pathToFile: string): Boolean;
 
 function IsVector(element: TdfElement): Boolean;
 function IsQuaternion(element: TdfElement): Boolean;
+function IsTriangle(element: TdfElement): Boolean;
 
 function ParseResolveReference(var key: String): Boolean;
 // Temporarily copied from xeElements.pas
@@ -84,6 +85,7 @@ function SetNifFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBo
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
+function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
 function SetNifFlag(_id: Cardinal; path, name: PWideChar; enable: WordBool): WordBool; cdecl;
 function GetAllNifFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -169,6 +171,11 @@ end;
 function IsQuaternion(element: TdfElement): Boolean;
 begin
   Result := element.DataType = dtQuaternion;
+end;
+
+function IsTriangle(element: TdfElement): Boolean;
+begin
+  Result := element.DataType = dtTriangle;
 end;
 
 function ParseResolveReference(var key: String): Boolean;
@@ -957,6 +964,25 @@ begin
     finally
       obj.Free;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not IsTriangle(element) then
+      raise Exception.Create('Element is not a triangle.');
+
+    resultStr := GetMergedElementNativeValues(element as TdfMerge);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
