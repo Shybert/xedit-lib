@@ -1307,6 +1307,48 @@ begin
             end);
         end);
 
+      Describe('SetNifTexCoords', procedure
+        begin
+          It('Should be able to set texture coordinates', procedure
+            begin
+              ExpectSuccess(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"U":-0.625,"V":1.125}'));
+              ExpectSuccess(GetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', @len));
+              ExpectEqual(grs(len), '{"U":-0.625,"V":1.125}');
+            end);
+
+          It('Should support texture coordinates in any order', procedure
+            begin
+              ExpectSuccess(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"V":1,"U":25}'));
+              ExpectSuccess(GetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', @len));
+              ExpectEqual(grs(len), '{"U":25,"V":1}');
+            end);
+
+          It('Should not require setting both texture coordinates at the same time', procedure
+            begin
+              ExpectSuccess(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"V":-23.125}'));
+              ExpectSuccess(GetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', @len));
+              ExpectEqual(grs(len), '{"U":25,"V":-23.125}');
+            end);
+
+          It('Should fail if the JSON values are invalid', procedure
+            begin
+              ExpectFailure(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"U":true,"V":1}'));
+              ExpectFailure(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"U":[],"V":1}'));
+            end);
+
+          It('Should fail if the JSON is invalid', procedure
+            begin
+              ExpectFailure(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', 'Invalid'));
+            end);
+
+          It('Should fail if the element isn''t texture coordinates', procedure
+            begin
+              ExpectFailure(SetNifTexCoords(nif, '', '{"U":1,"V":1}'));
+              ExpectFailure(SetNifTexCoords(rootNode, '', '{"U":1,"V":1}'));
+              ExpectFailure(SetNifTexCoords(nif, 'bhkRigidBody\Rotation', '{"U":1,"V":1}'));
+            end);
+        end);
+
       Describe('GetNifFlag', procedure
         begin
           It('Should return false for disabled flags', procedure
