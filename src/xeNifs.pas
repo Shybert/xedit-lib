@@ -43,8 +43,8 @@ procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 function NativeIsNifHeader(const element: TdfElement): Boolean;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
 
-function MergedElementToJSON(const element: TdfMerge): String;
-procedure SetMergedElement(const element: TdfMerge; const json: String);
+function GetMergedElementNativeValues(const element: TdfMerge): String;
+procedure SetMergedElementNativeValues(const element: TdfMerge; const json: String);
 {$endregion}
 
 {$region 'API functions'}
@@ -419,7 +419,7 @@ begin
   Result := element is TwbNifBlock and (TwbNifBlock(element).BlockType = 'NiFooter')
 end;
 
-function MergedElementToJSON(const element: TdfMerge): String;
+function GetMergedElementNativeValues(const element: TdfMerge): String;
 var
   obj: TJSONObject;
   i: Integer;
@@ -435,7 +435,7 @@ begin
   end;
 end;
 
-procedure SetMergedElement(const element: TdfMerge; const json: String);
+procedure SetMergedElementNativeValues(const element: TdfMerge; const json: String);
 var
   obj: TJSONObject;
   i: Integer;
@@ -898,7 +898,7 @@ begin
     if not IsVector(element) then
       raise Exception.Create('Element is not a vector.');
 
-    resultStr := MergedElementToJSON(element as TdfMerge);
+    resultStr := GetMergedElementNativeValues(element as TdfMerge);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -916,7 +916,7 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not IsVector(element) then
       raise Exception.Create('Element is not a vector.');
-    SetMergedElement(element as TdfMerge, coords);
+    SetMergedElementNativeValues(element as TdfMerge, coords);
     Result := True
   except
     on x: Exception do ExceptionHandler(x);
