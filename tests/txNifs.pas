@@ -1171,15 +1171,16 @@ begin
 
           It('Should support coordinates in any order', procedure
             begin
-              SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', '{"W":0.625,"Y":29.1953125,"X":5.625,"Z":7.125}');
-              GetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', @len);
+              ExpectSuccess(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', '{"W":0.625,"Y":29.1953125,"X":5.625,"Z":7.125}'));
+              ExpectSuccess(GetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', @len));
               ExpectEqual(grs(len), '{"X":5.625,"Y":29.1953125,"Z":7.125,"W":0.625}');
             end);
 
-          It('Should fail if the JSON is missing coordinates', procedure
+          It('Should not require setting all coordinates at the same time', procedure
             begin
-              ExpectFailure(SetNifVector(nif, 'BSTriShape\Vertex Data\[0]\Normal', '{"Y":255,"Z":192}'));
-              ExpectFailure(SetNifVector(nif, 'bhkRigidBody\Translation', '{"X": 1.0, "Y": 1.0, "Z": 1.0}'));
+              ExpectSuccess(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', '{"Y":3.125,"W":-25.15625}'));
+              ExpectSuccess(GetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Max', @len));
+              ExpectEqual(grs(len), '{"X":5.625,"Y":3.125,"Z":7.125,"W":-25.15625}');
             end);
 
           It('Should fail if the JSON values are invalid', procedure

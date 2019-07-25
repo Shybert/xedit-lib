@@ -443,14 +443,13 @@ begin
   obj := TJSONObject.Create(json);
   try
     with TdfMergeDef(element.Def) do
-    for i := Low(Defs) to High(Defs) do begin
-      if not obj.HasKey(Defs[i].Name) then
-        raise Exception.Create('JSON is missing a "' + Defs[i].Name + '" property.');
-      if not (obj[Defs[i].Name].JSONValueType in [jtDouble, jtInt]) then
-        raise Exception.Create('The value of property "' + Defs[i].Name + '" is not a number.');
+    for i := Low(Defs) to High(Defs) do
+      if obj.HasKey(Defs[i].Name) then begin
+        if not (obj[Defs[i].Name].JSONValueType in [jtDouble, jtInt]) then
+          raise Exception.Create('The value of property "' + Defs[i].Name + '" is not a number.');
 
-      element.NativeValues[Defs[i].Name] := obj[Defs[i].Name].AsVariant;
-    end;
+        element.NativeValues[Defs[i].Name] := obj[Defs[i].Name].AsVariant;
+      end;
   finally
     obj.Free;
   end;
