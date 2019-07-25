@@ -28,7 +28,8 @@ type
     dtFloat32,
     dtVector3,
     dtVector4,
-    dtQuaternion
+    dtQuaternion,
+    dtTriangle
   );
 
   TdfResourceOpenDataCallback = function(const aContainerName, aFileName: string): TBytes;
@@ -58,7 +59,8 @@ const
     4,  // dtFloat32
     0,  // dtVector3
     0,  // dtVector4
-    0   // dtQuaternion
+    0,  // dtQuaternion
+    0   // dtTriangle
   );
 
   DF_OnCreate = 1;

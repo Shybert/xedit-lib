@@ -801,7 +801,7 @@ begin
     dfInteger('V1', dtU16),
     dfInteger('V2', dtU16),
     dfInteger('V3', dtU16)
-  ], aDefaultValue, aEvents);
+  ], aDefaultValue, aEvents, dtTriangle);
 end;
 
 function wbTriangle(const aName: string; const aEvents: array of const): TdfDef;
