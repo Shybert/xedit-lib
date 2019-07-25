@@ -764,7 +764,7 @@ begin
   Result := dfMerge(aName, [
     dfFloat('U'),
     dfFloat('V')
-  ], aDefaultValue, aEvents, dtTexCoord);
+  ], aDefaultValue, aEvents, dtTexCoords);
 end;
 
 function wbTexCoord(const aName: string; const aEvents: array of const): TdfDef;
@@ -782,7 +782,7 @@ begin
   Result := dfMerge(aName, [
     dfFloat('U', dtFloat16),
     dfFloat('V', dtFloat16)
-  ], aDefaultValue, aEvents, dtTexCoord);
+  ], aDefaultValue, aEvents, dtTexCoords);
 end;
 
 function wbHalfTexCoord(const aName: string; const aEvents: array of const): TdfDef;

@@ -29,7 +29,7 @@ type
     dtVector3,
     dtVector4,
     dtQuaternion,
-    dtTexCoord,
+    dtTexCoords,
     dtTriangle
   );
 
@@ -61,7 +61,7 @@ const
     0,  // dtVector3
     0,  // dtVector4
     0,  // dtQuaternion
-    0,   // dtTexCoord
+    0,  // dtTexCoords
     0   // dtTriangle
   );
 

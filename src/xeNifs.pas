@@ -17,7 +17,7 @@ function IsFileInContainer(const containerName, pathToFile: string): Boolean;
 
 function IsVector(element: TdfElement): Boolean;
 function IsQuaternion(element: TdfElement): Boolean;
-function IsTexCoord(element: TdfElement): Boolean;
+function IsTexCoords(element: TdfElement): Boolean;
 function IsTriangle(element: TdfElement): Boolean;
 
 function ParseResolveReference(var key: String): Boolean;
@@ -86,7 +86,7 @@ function SetNifFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBo
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
-function GetNifTexCoord(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifTriangle(_id: Cardinal; path, vertexIndices: PWideChar): WordBool; cdecl;
 function GetNifFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
@@ -176,9 +176,9 @@ begin
   Result := element.DataType = dtQuaternion;
 end;
 
-function IsTexCoord(element: TdfElement): Boolean;
+function IsTexCoords(element: TdfElement): Boolean;
 begin
-  Result := element.DataType = dtTexCoord;
+  Result := element.DataType = dtTexCoords;
 end;
 
 function IsTriangle(element: TdfElement): Boolean;
@@ -977,7 +977,7 @@ begin
   end;
 end;
 
-function GetNifTexCoord(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   element: TdfElement;
 begin
@@ -985,7 +985,7 @@ begin
   try
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
-    if not IsTexCoord(element) then
+    if not IsTexCoords(element) then
       raise Exception.Create('Element is not texture coordinates.');
 
     resultStr := GetMergedElementNativeValues(element as TdfMerge);

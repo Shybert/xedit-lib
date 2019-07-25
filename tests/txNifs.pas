@@ -1289,21 +1289,21 @@ begin
             end);
         end);
 
-      Describe('GetNifTexCoord', procedure
+      Describe('GetNifTexCoords', procedure
         begin
           It('Should resolve texture coordinates', procedure
             begin
-              ExpectSuccess(GetNifTexCoord(nif, 'BSTriShape\Vertex Data\[0]\UV', @len));
+              ExpectSuccess(GetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', @len));
               ExpectEqual(grs(len), '{"U":0.5,"V":0.5029296875}');
-              ExpectSuccess(GetNifTexCoord(nif, 'BSLightingShaderProperty\UV Scale', @len));
+              ExpectSuccess(GetNifTexCoords(nif, 'BSLightingShaderProperty\UV Scale', @len));
               ExpectEqual(grs(len), '{"U":1,"V":1}');
             end);
 
           It('Should fail if the element isn''t texture coordinates', procedure
             begin
-              ExpectFailure(GetNifTexCoord(nif, '', @len));
-              ExpectFailure(GetNifTexCoord(rootNode, '', @len));
-              ExpectFailure(GetNifTexCoord(nif, 'bhkRigidBody\Rotation', @len));
+              ExpectFailure(GetNifTexCoords(nif, '', @len));
+              ExpectFailure(GetNifTexCoords(rootNode, '', @len));
+              ExpectFailure(GetNifTexCoords(nif, 'bhkRigidBody\Rotation', @len));
             end);
         end);
 
