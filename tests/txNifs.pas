@@ -1220,6 +1220,48 @@ begin
             end);
         end);
 
+      Describe('SetNifTriangle', procedure
+        begin
+          It('Should be able to set vertex indices', procedure
+            begin
+              ExpectSuccess(SetNifTriangle(nif, 'BSTriShape\Triangles\[0]', '{"V1":21,"V2":2,"V3":13}'));
+              ExpectSuccess(GetNifTriangle(nif, 'BSTriShape\Triangles\[0]', @len));
+              ExpectEqual(grs(len), '{"V1":21,"V2":2,"V3":13}');
+            end);
+
+          It('Should support vertex indices in any order', procedure
+            begin
+              ExpectSuccess(SetNifTriangle(nif, 'BSTriShape\Triangles\[1]', '{"V2":19,"V3":2,"V1":13}'));
+              ExpectSuccess(GetNifTriangle(nif, 'BSTriShape\Triangles\[1]', @len));
+              ExpectEqual(grs(len), '{"V1":13,"V2":19,"V3":2}');
+            end);
+
+          It('Should not require setting all vertex indices at the same time', procedure
+            begin
+              ExpectSuccess(SetNifTriangle(nif, 'BSTriShape\Triangles\[2]', '{"V2":19}'));
+              ExpectSuccess(GetNifTriangle(nif, 'BSTriShape\Triangles\[2]', @len));
+              ExpectEqual(grs(len), '{"V1":5,"V2":19,"V3":7}');
+            end);
+
+          It('Should fail if the JSON values are invalid', procedure
+            begin
+              ExpectFailure(SetNifTriangle(nif, 'BSTriShape\Triangles\[3]', '{"V1":true,"V2":19,"V3":7}'));
+              ExpectFailure(SetNifTriangle(nif, 'BSTriShape\Triangles\[3]', '{"V1":[],"V2":19,"V3":7}'));
+            end);
+
+          It('Should fail if the JSON is invalid', procedure
+            begin
+              ExpectFailure(SetNifTriangle(nif, 'BSTriShape\Triangles\[4]', 'Invalid'));
+            end);
+
+          It('Should fail if the element isn''t a triangle', procedure
+            begin
+              ExpectFailure(SetNifTriangle(nif, '', '{"V1":1,"V2":1,"V3":1}'));
+              ExpectFailure(SetNifTriangle(rootNode, '', '{"V1":1,"V2":1,"V3":1}'));
+              ExpectFailure(SetNifTriangle(nif, 'bhkRigidBody\Rotation', '{"V1":1,"V2":1,"V3":1}'));
+            end);
+        end);
+
       Describe('GetNifQuaternion', procedure
         begin
           BeforeAll(procedure
