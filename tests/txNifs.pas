@@ -1309,6 +1309,52 @@ begin
             end);
         end);
 
+      Describe('SetNativeNifQuaternion', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(LoadNif('meshes\animobjects\animobjectbucket.nif', @h));
+            end);
+
+          It('Should be able to set quaternion coordinates', procedure
+            begin
+              ExpectSuccess(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":-2,"Y":2.125,"Z":-44.625,"W":39}'));
+              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
+              ExpectEqual(grs(len), '{"X":-2,"Y":2.125,"Z":-44.625,"W":39}');
+            end);
+
+          It('Should support coordinates in any order', procedure
+            begin
+              ExpectSuccess(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"Z":0.625,"Y":1.125,"X":0,"W":-25}'));
+              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
+              ExpectEqual(grs(len), '{"X":0,"Y":1.125,"Z":0.625,"W":-25}');
+            end);
+
+          It('Should not require setting all coordinates at the same time', procedure
+            begin
+              ExpectSuccess(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"Z":-23.125}'));
+              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
+              ExpectEqual(grs(len), '{"X":0,"Y":1.125,"Z":-23.125,"W":-25}');
+            end);
+
+          It('Should fail if the JSON values are invalid', procedure
+            begin
+              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":true,"Y":1,"Z":1,"W":1}'));
+              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":[],"Y":1,"Z":1,"W":1}'));
+            end);
+
+          It('Should fail if the JSON is invalid', procedure
+            begin
+              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', 'Invalid'));
+            end);
+
+          It('Should fail if the element isn''t a quaternion', procedure
+            begin
+              ExpectFailure(SetNativeNifQuaternion(nif, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
+              ExpectFailure(SetNativeNifQuaternion(rootNode, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
+            end);
+        end);
+
       Describe('GetNifTexCoords', procedure
         begin
           It('Should resolve texture coordinates', procedure
