@@ -1289,6 +1289,26 @@ begin
             end);
         end);
 
+      Describe('GetNativeNifQuaternion', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(LoadNif('meshes\animobjects\animobjectbucket.nif', @h));
+            end);
+
+          It('Should resolve quaternion coordinates', procedure
+            begin
+              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
+              ExpectEqual(grs(len), '{"X":0.160401180386543,"Y":0.713838517665863,"Z":-0.507264733314514,"W":0.455399125814438}');
+            end);
+
+          It('Should fail if the element isn''t a quaternion', procedure
+            begin
+              ExpectFailure(GetNativeNifQuaternion(nif, '', @len));
+              ExpectFailure(GetNativeNifQuaternion(rootNode, '', @len));
+            end);
+        end);
+
       Describe('GetNifTexCoords', procedure
         begin
           It('Should resolve texture coordinates', procedure

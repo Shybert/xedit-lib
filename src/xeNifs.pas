@@ -86,6 +86,7 @@ function SetNifFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBo
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
+function GetNativeNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifTexCoords(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -172,6 +173,7 @@ function IsVector(element: TdfElement): Boolean;
 begin
   Result := (element.DataType = dtVector3) or (element.DataType = dtVector4);
 end;
+
 function IsQuaternion(element: TdfElement): Boolean;
 begin
   Result := element.DataType = dtQuaternion;
@@ -973,6 +975,25 @@ begin
     finally
       obj.Free;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNativeNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not IsQuaternion(element) then
+      raise Exception.Create('Element is not a quaternion.');
+
+    resultStr := GetMergedElementNativeValues(element as TdfMerge);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
