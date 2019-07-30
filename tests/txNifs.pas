@@ -43,17 +43,6 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
-procedure TestAddNifBlock(h: Cardinal; blockType: PWideChar);
-var
-  element: Cardinal;
-  exists: WordBool;
-begin
-  ExpectSuccess(AddNifBlock(h, blockType, @element));
-  ExpectSuccess(HasNifElement(h, blockType, @exists));
-  Expect(exists, 'The block should be present');
-  Expect(element > 0, 'Handle should be greater than 0');
-end;
-
 procedure TestRemoveNifBlock(h: Cardinal; path: PWideChar; recursive: Boolean = False);
 var
   b: WordBool;
@@ -230,7 +219,7 @@ end;
 procedure BuildFileHandlingTests;
 var
   b: WordBool;
-  h, h2, nif, header, footer, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, xt3, c: Cardinal;
+  h, h2, nif, header, footer, rootNode, childrenArray, ref, transformStruct, vector, float, xt2, childArr2, xt3, c: Cardinal;
   len, i: Integer;
   f: Double;
   str: String;
@@ -249,6 +238,7 @@ begin
           ExpectSuccess(GetNifElement(transformStruct, 'Translation', @vector));
           ExpectSuccess(GetNifElement(transformStruct, 'Scale', @float));
           ExpectSuccess(LoadNif(PWideChar('xtest-2.nif'), @xt2));
+          ExpectSuccess(GetNifElement(xt2, 'BSFadeNode\Children', @childArr2));
           ExpectSuccess(LoadNif(PWideChar('xtest-3.nif'), @xt3));
         end);
 
@@ -575,35 +565,117 @@ begin
             end);
         end);
 
-        Describe('AddNifBlock', procedure
-          begin
-            It('Should be able to add a block to a nif file', procedure
-              begin
-                TestAddNifBlock(xt2, 'NiTriShape');
-              end);
+       Describe('AddNifBlock', procedure
+         begin
+           Describe('Adding blocks to nif files', procedure
+             begin
+               It('Should add a new block with the passed block type', procedure
+                 begin
+                   ExpectSuccess(AddNifBlock(xt3, '', 'BSXFlags', @h));
+                   Expect(h > 0, 'Handle should be greater than 0');
+                   TestHasNifElement(xt3, 'BSXFlags');
+                 end);
 
-            It('Should add the first added NiNode type block as a root', procedure
-              begin
-                ExpectSuccess(GetNifElement(xt3, 'Roots', @h));
-                TestNifElementCount(h, 0);
-                TestAddNifBlock(xt3, 'BSTriShape');
-                TestNifElementCount(h, 0);
-                TestAddNifBlock(xt3, 'BSFadeNode');
-                TestNifElementCount(h, 1);
-                TestAddNifBlock(xt3, 'BSFadeNode');
-                TestNifElementCount(h, 1);
-              end);
+               It('Should add the first added NiNode type block as a root', procedure
+                 begin
+                   ExpectSuccess(GetNifElement(xt3, 'Roots', @h));
+                   ExpectSuccess(AddNifBlock(xt3, '', 'BSFurnitureMarkerNode', @h2));
+                   TestNifElementCount(h, 0);
+                   ExpectSuccess(AddNifBlock(xt3, '', 'BSFadeNode', @h2));
+                   TestNifElementCount(h, 1);
+                   ExpectSuccess(AddNifBlock(xt3, '', 'BSFadeNode', @h2));
+                   TestNifElementCount(h, 1);
+                 end);
 
-            It('Should fail if the block type is invalid', procedure
-              begin
-                ExpectFailure(AddNifBlock(xt3, 'NonExistingBlockType', @h));
-              end);
+               It('Should fail if the block type is invalid', procedure
+                 begin
+                   ExpectFailure(AddNifBlock(xt3, '', 'NonExistingBlockType', @h));
+                 end);
+             end);
 
-            It('Should fail if the handle isn''t a nif file', procedure
-              begin
-                ExpectFailure(AddNifBlock(rootNode, 'BSFadeNode', @h));
-              end);
-          end);
+           Describe('Adding blocks to arrays of references', procedure
+             begin
+               It('Should add a new block with the passed block type', procedure
+                 begin
+                   ExpectSuccess(AddNifBlock(childArr2, '', 'NiParticles', @h));
+                   Expect(h > 0, 'Handle should be greater than 0');
+                   TestHasNifElement(xt2, 'NiParticles');
+                 end);
+
+               It('Should add a new reference to the array, if there are no None references', procedure
+                 begin
+                   ExpectSuccess(AddNifBlock(childArr2, '', 'NiNode', @h));
+                   TestNifElementCount(childArr2, 2);
+                 end);
+
+               It('Should make the newly added reference link to the newly added block', procedure
+                 begin
+                  ExpectSuccess(AddNifBlock(childArr2, '', 'NiNode', @h));
+                  ExpectSuccess(GetNifElement(childArr2, '@[-1]', @h2));
+                  TestNifElementEquals(h, h2);
+                 end);                                  
+
+               It('Should reuse existing None references in the array', procedure
+                 begin
+                   ExpectSuccess(RemoveNifBlock(childArr2, '@[-1]', false));
+                   ExpectSuccess(AddNifBlock(childArr2, '', 'NiNode', @h));
+                   TestNifElementCount(childArr2, 3);
+                 end);
+
+               It('Should fail if the array cannot have references to the passed block type', procedure
+                begin
+                  ExpectFailure(AddNifBlock(rootNode, 'Extra Data List', 'NiNode', @h));
+                end);                 
+
+               It('Should fail if the array cannot have references', procedure
+                 begin
+                  ExpectFailure(AddNifBlock(nif, 'Header\Block Size', 'NiNode', @h));
+                  ExpectFailure(AddNifBlock(nif, 'BSTriShape\Triangles', 'NiNode', @h));
+                 end);
+             end);
+
+           Describe('Adding blocks to references', procedure
+             begin
+               It('Should add a new block with the passed block type', procedure
+                 begin
+                   ExpectSuccess(AddNifBlock(childArr2, '[-1]', 'NiTriShape', @h));
+                   Expect(h > 0, 'Handle should be greater than 0');
+                   TestHasNifElement(xt2, 'NiParticles');
+                 end);
+
+               It('Should make the reference link to the newly added block', procedure
+                 begin
+                   ExpectSuccess(AddNifBlock(childArr2, '[-1]', 'NiNode', @h));
+                   ExpectSuccess(GetNifElement(childArr2, '@[-1]', @h2));
+                   TestNifElementEquals(h, h2);
+                 end);
+
+               It('Should return the currently linked block if the reference already links to a block with the passed block type', procedure
+                 begin
+                   ExpectSuccess(GetNifElement(childArr2, '@[-1]', @h));
+                   ExpectSuccess(AddNifBlock(childArr2, '[-1]', 'NiNode', @h2));
+                   TestNifElementEquals(h, h2);
+                 end);
+
+               It('Should not add a new block if the reference already links to a block with the passed block type', procedure
+                 begin
+                  ExpectSuccess(NifElementCount(xt2, @i));
+                  ExpectSuccess(AddNifBlock(childArr2, '[-1]', 'NiNode', @h));
+                  TestNifElementCount(xt2, i)
+                 end);                 
+
+               It('Should fail if the reference cannot link to the passed block type', procedure
+                 begin
+                   ExpectFailure(AddNifBlock(rootNode, 'Extra Data List\[1]', 'NiNode', @h));
+                 end);
+             end);
+
+           It('Should fail if interface is neither a nif file, an array, nor a reference', procedure
+             begin
+               ExpectFailure(AddNifBlock(rootNode, '', 'NiNode', @h));
+               ExpectFailure(AddNifBlock(vector, '', 'NiNode', @h));
+             end);
+         end);
 
         Describe('RemoveNifBlock', procedure
           begin

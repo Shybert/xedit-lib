@@ -39,6 +39,9 @@ function ResolvePath(const element: TdfElement; const path: string): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
+function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
+function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNifBlock;
+
 procedure NativeRemoveNifBlock(block: TwbNifBlock; recursive: WordBool);
 procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 
@@ -57,7 +60,7 @@ function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal)
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
-function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddNifBlock(_id: Cardinal; path, blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
 function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -386,6 +389,41 @@ begin
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
 end;
 
+function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
+begin
+  if not wbIsNiObject(blockType, ref.Template) then
+    raise Exception.Create('Reference cannot link to the block type "' + blockType + '".');
+
+  if Assigned(ref.LinksTo()) and (TwbNifBlock(ref.LinksTo).BlockType = blockType) then
+    Result := ref.LinksTo as TwbNifBlock
+  else begin
+    Result := TwbNifFile(ref.Root).AddBlock(blockType) as TwbNifBlock;
+    ref.NativeValue := Result.Index;
+  end;  
+end;
+
+function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNifBlock;
+var
+  ref: TwbNiRef;
+  i: Integer;
+begin
+  if not (arr.Def.Defs[0] is TwbNiRefDef) then
+    raise Exception.Create('Array cannot have references.');
+  if not wbIsNiObject(blockType, TwbNiRefDef(arr.Def.Defs[0]).Template) then
+    raise Exception.Create('Array cannot have references to the block type "' + blockType + '".');
+
+  ref := nil;
+  // Find existing None reference, if any
+  for i := 0 to Pred(arr.Count) do
+    if arr[i].NativeValue = -1 then begin
+      ref := TwbNiRef(arr[i]);
+      Break;
+    end;
+  if not Assigned(ref) then
+    ref := TwbNiRef(arr.Add);
+  Result := AddBlockFromReference(ref, blockType)
+end;
+
 procedure NativeRemoveNifBlock(block: TwbNifBlock; recursive: WordBool);
 var
   i: Integer;
@@ -552,16 +590,24 @@ Result := False;
   end;
 end;
 
-function AddNifBlock(_id: Cardinal; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddNifBlock(_id: Cardinal; path, blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: TdfElement;
 begin
   Result := False;
   try
-    element :=  ResolveObjects(_id) as TdfElement;
-    if not (element is TwbNifFile) then
-      raise Exception.Create('Interface must be a nif file.');
-    _res^ := StoreObjects((element as TwbNifFile).AddBlock(blockType));
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+
+    if element is TwbNifFile then
+      _res^ := StoreObjects(TwbNifFile(element).AddBlock(blockType))
+    else if element is TdfArray then
+      _res^ := StoreObjects(AddBlockFromArray(TdfArray(element), blockType))
+    else if element is TwbNiRef then
+      _res^ := StoreObjects(AddBlockFromReference(TwbNiRef(element), blockType))
+    else
+      raise Exception.Create('Element must either be a nif file, an array, or a reference.');
+
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
