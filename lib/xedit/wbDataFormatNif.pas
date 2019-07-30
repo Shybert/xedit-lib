@@ -141,6 +141,7 @@ type
     property StopAtIndex: Integer read FStopAtIndex write FStopAtIndex;
   end;
 
+function wbIsNiObject(const aNiObject, aTemplate: string): Boolean; overload;
 {
 function wbNiObjectExists(const aNiObject: string): Boolean;
 procedure wbNiObjectCheckDups;
