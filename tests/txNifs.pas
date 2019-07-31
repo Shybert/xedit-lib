@@ -43,6 +43,16 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
+procedure TestNames(a: CardinalArray; firstName, lastName: String);
+var
+  len: Integer;
+begin
+  ExpectSuccess(NifName(a[Low(a)], @len));
+  ExpectEqual(grs(len), firstName);
+  ExpectSuccess(NifName(a[High(a)], @len));
+  ExpectEqual(grs(len), lastName);
+end;
+
 procedure TestRemoveNifBlock(h: Cardinal; path: PWideChar; recursive: Boolean = False);
 var
   b: WordBool;
@@ -562,6 +572,42 @@ begin
                 begin
                   ExpectFailure(GetNifElement(nif, 'BSFadeNode\Children\@[0]\Children\@[0]\@NonExistingProperty', @h));
                 end);
+            end);
+        end);
+
+      Describe('GetNifElements', procedure
+        begin
+          It('Should resolve blocks in a nif file', procedure
+            begin
+              ExpectSuccess(GetNifElements(nif, '', @len));
+              ExpectEqual(len, 32);
+              TestNames(gra(len), 'NiHeader', 'NiFooter');
+            end);
+
+          It('Should resolve elements in a block', procedure
+            begin
+              ExpectSuccess(GetNifElements(rootNode, '', @len));
+              ExpectEqual(len, 13);
+              TestNames(gra(len), 'Name', 'Effects');
+            end);
+
+          It('Should resolve elements in a struct', procedure
+            begin
+              ExpectSuccess(GetNifElements(transformStruct, '', @len));
+              ExpectEqual(len, 3);
+              TestNames(gra(len), 'Translation', 'Scale');
+            end);     
+
+          It('Should resolve elements in an array', procedure
+            begin
+              ExpectSuccess(GetNifElements(childrenArray, '', @len));
+              ExpectEqual(len, 6);
+              TestNames(gra(len), 'Children #0', 'Children #5');
+            end);
+
+          It('Should fail if element isn''t a container', procedure
+            begin
+              ExpectFailure(GetNifElements(vector, '', @len));
             end);
         end);
 

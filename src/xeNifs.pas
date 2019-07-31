@@ -60,6 +60,7 @@ function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal)
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetNifElements(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function AddNifBlock(_id: Cardinal; path, blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
 function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
@@ -584,6 +585,27 @@ Result := False;
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     _res^ := StoreObjects(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifElements(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+  i: Integer;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not (element is TdfContainer) then
+      raise Exception.Create('Element is not a container.');
+    SetLength(resultArray, element.Count);
+    for i := 0 to Pred(element.Count) do
+      resultArray[i] := StoreObjects(element[i]);
+    len^ := Length(resultArray);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
