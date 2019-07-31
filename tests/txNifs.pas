@@ -1033,14 +1033,29 @@ begin
             end);
         end);
 
-      Describe('GetNifName', procedure
+      Describe('NifName', procedure
         begin
-          It('Should return true if file handle is valid', procedure
+          It('Should return "NIF" if input is a Nif file', procedure
             begin
-              ExpectSuccess(GetNifName(nif, @len));
+              ExpectSuccess(NifName(nif, @len));
               ExpectEqual(grs(len), 'NIF');
             end);
 
+          It('Should resolve block names', procedure
+            begin
+              ExpectSuccess(NifName(rootNode, @len));
+              ExpectEqual(grs(len), '0 BSFadeNode');
+            end);
+
+          It('Should resolve block property names', procedure
+            begin
+              ExpectSuccess(NifName(transformStruct, @len));
+              ExpectEqual(grs(len), 'Transform');
+              ExpectSuccess(NifName(vector, @len));
+              ExpectEqual(grs(len), 'Translation');
+              ExpectSuccess(NifName(ref, @len));
+              ExpectEqual(grs(len), 'Children #0');
+            end);
         end);
 
       Describe('GetNifBlockType', procedure

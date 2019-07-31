@@ -75,7 +75,7 @@ function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool
 function IsNiPtr(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 
 //Properties
-function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function NifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 function GetNifBlockType(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
 {$region 'Value functions'}
@@ -807,21 +807,17 @@ begin
   end;
 end;
 
-function GetNifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function NifName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
-  _obj: TdfElement;
+  element: TdfElement;
 begin
   Result := False;
   try
-    if not (ResolveObjects(_id) is TdfElement) then
-      raise Exception.Create('Interface must be a TdfElement.')
-    else
-    begin
-      _obj := ResolveObjects(_id) as TdfElement;
-      resultStr := _obj.Name;
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    element := ResolveObjects(_id) as TdfElement;
+    if NifElementNotFound(element, '') then exit;
+    resultStr := element.Name;
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
