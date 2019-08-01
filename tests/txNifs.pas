@@ -794,6 +794,49 @@ begin
               end);
           end);
 
+        Describe('MoveNifBlock', procedure
+          begin
+            BeforeAll(procedure
+              begin
+                ExpectSuccess(LoadNif('xtest-1.nif', @h));
+              end);
+
+            It('Should move blocks to the passed index', procedure
+              begin
+                ExpectSuccess(MoveNifBlock(h, 'BSTriShape', 11));
+                TestGetNifElementIndex(h, 'BSTriShape', 11);
+              end);
+
+            It('Should remap blocks', procedure
+              begin
+                ExpectSuccess(MoveNifBlock(h, 'bhkCompressedMeshShapeData', 7));
+                TestGetNifElementIndex(h, 'bhkCompressedMeshShapeData', 7);
+                TestGetNifElementIndex(h, 'bhkCollisionObject', 6);
+                TestGetNifElementIndex(h, 'NiNode', 8);
+                TestGetNifElementIndex(h, 'BSXFlags', 2);
+              end);
+
+            It('Should treat the index "-1" as the max index', procedure
+              begin
+                ExpectSuccess(GetNifElement(h, '[12]', @h2));
+                ExpectSuccess(MoveNifBlock(h2, '', -1));
+                TestGetNifElementIndex(h2, '', 29);
+              end);
+
+            It('Should fail if the passed index is out of bonds', procedure
+              begin
+                ExpectFailure(MoveNifBlock(rootNode, '', -2));
+                ExpectFailure(MoveNifBlock(rootNode, '', 30));
+              end);
+
+            It('Should fail if the element is not a nif block', procedure
+              begin
+                ExpectFailure(MoveNifBlock(nif, '', 0));
+                ExpectFailure(MoveNifBlock(nif, 'BSFadeNode\Name', 0));
+                ExpectFailure(MoveNifBlock(nif, 'BSFadeNode\Children\[0]', 0));
+              end);
+          end);
+
       Describe('GetNifBlocks', procedure
         begin
           Describe('No search', procedure
