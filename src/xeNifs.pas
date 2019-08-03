@@ -39,6 +39,9 @@ function ResolvePath(const element: TdfElement; const path: string): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
+function NifReferenceMatches(const ref: TwbNiRef; const value: String): Boolean;
+function NativeNifElementMatches(const element: TdfElement; const value: string): Boolean;
+
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
 function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNifBlock;
 
@@ -69,6 +72,7 @@ function GetNifLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBoo
 function SetNifLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
+function NifElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -389,6 +393,37 @@ begin
     Result := ResolveObjects(_id) as TdfElement
   else
     Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
+end;
+
+function NifReferenceMatches(const ref: TwbNiRef; const value: String): Boolean;
+var
+  block: TwbNifBlock;
+  index: Integer;
+  fullName: String;
+begin
+  Result := False;
+  block := TwbNifBlock(ref.LinksTo);
+  if Assigned(block) then begin
+    if ParseIndex(value, index) then
+      Result := index = block.Index
+    else if ParseFullName(value, fullName) then
+      Result := fullName = block.EditValues['Name']
+    else
+      Result := value = block.BlockType;     
+  end;
+end;
+
+function NativeNifElementMatches(const element: TdfElement; const value: string): Boolean;
+var
+  editValue: String;
+  e1, e2: Extended;
+begin
+  if element is TwbNiRef then
+    Result := NifReferenceMatches(TwbNiRef(element), value)  
+  else begin
+    editValue := element.EditValue;
+    Result := (TryStrToFloat(value, e1) and TryStrToFloat(editValue, e2) and (e1 = e2)) or (value = editValue);
+  end;
 end;
 
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
@@ -766,6 +801,21 @@ begin
     element2 := ResolveObjects(_id2) as TdfElement;
     if NifElementNotFound(element2, '') then exit;
     bool^ := element.Equals(element2);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NifElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    bool^ := NativeNifElementMatches(element, value);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

@@ -101,6 +101,14 @@ begin
   TestNifElementEquals(element1, element2, expectedValue);
 end;
 
+procedure TestNifElementMatches(h: Cardinal; path, value: PWideChar; expectedValue: WordBool = True);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(NifElementMatches(h, path, value, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
 procedure TestGetNifLinksTo(h: Cardinal; path: PWideChar; expectedBlock: Cardinal);
 var
   block: Cardinal;
@@ -993,6 +1001,46 @@ begin
             begin
               ExpectFailure(NifElementEquals($FFFFFF, 999999, @b));
             end);
+        end);
+
+      Describe('NifElementMatches', procedure
+        begin
+          It('Should return true if the edit value matches', procedure
+            begin
+              TestNifElementMatches(rootNode, 'Name', 'WindhelmThrone');
+              TestNifElementMatches(float, '', '1.0');
+              TestNifElementMatches(float, '', '1');
+              TestNifElementMatches(vector, '', '0.000000 0.000000 0.000000');
+            end);
+
+          It('Should return false if the edit value doesn''t match', procedure
+            begin
+              TestNifElementMatches(rootNode, 'Name', 'WiNdHeLmThRoNe', false);
+              TestNifElementMatches(float, '', '1.000001', false);
+              TestNifElementMatches(vector, '', '0.000000 0.000000 1.000000', false);
+            end);            
+
+         Describe('References', procedure
+           begin
+             It('Should be able to match indexes', procedure
+              begin
+                TestNifElementMatches(ref, '', '[8]');
+                TestNifElementMatches(ref, '', '[9]', false);
+              end);
+
+             It('Should be able to match block types', procedure
+              begin
+                TestNifElementMatches(ref, '', 'NiNode');
+                TestNifElementMatches(ref, '', 'BSTriShape', false);
+              end);         
+
+            It('Should be able to match names', procedure
+              begin
+                TestNifElementMatches(ref, '', '"SteelShield"');
+                TestNifElementMatches(ref, '', '"SteelArmor"', false);
+                TestNifElementMatches(ref, '', 'SteelShield', false);
+              end);     
+           end);
         end);
 
       Describe('GetNifElementIndex', procedure
