@@ -431,12 +431,11 @@ begin
   if not wbIsNiObject(blockType, ref.Template) then
     raise Exception.Create('Reference cannot link to the block type "' + blockType + '".');
 
-  if Assigned(ref.LinksTo()) and (TwbNifBlock(ref.LinksTo).BlockType = blockType) then
-    Result := ref.LinksTo as TwbNifBlock
-  else begin
+  Result := TwbNifBlock(ref.LinksTo);
+  if not Assigned(Result) or (Result.BlockType <> blockType) then begin
     Result := TwbNifFile(ref.Root).AddBlock(blockType) as TwbNifBlock;
     ref.NativeValue := Result.Index;
-  end;  
+  end;
 end;
 
 function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNifBlock;
