@@ -109,6 +109,14 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
+procedure TestGetNifArrayItem(h: Cardinal; path, subPath, value: PWideChar);
+var
+  item: Cardinal;
+begin
+  ExpectSuccess(GetNifArrayItem(h, path, subPath, value, @item));
+  Expect(item > 0, 'Handle should be greater than 0');
+end;
+
 procedure TestGetNifLinksTo(h: Cardinal; path: PWideChar; expectedBlock: Cardinal);
 var
   block: Cardinal;
@@ -1042,6 +1050,45 @@ begin
               end);     
            end);
         end);
+
+      Describe('GetNifArrayItem', procedure
+        begin
+          Describe('Value arrays', procedure
+            begin
+              It('Should succeed if array item is present', procedure
+                begin
+                  TestGetNifArrayItem(childrenArray, '', '', 'BSTriShape');
+                  TestGetNifArrayItem(nif, 'Header\Strings', '', 'SteelShield');
+                end);
+
+              It('Should fail if array item isn''t present', procedure
+                begin
+                  ExpectFailure(GetNifArrayItem(childrenArray, '', '', 'BSFadeNode', @h));
+                  ExpectFailure(GetNifArrayItem(nif, 'Header\Strings', '', 'Nope', @h));
+                end);
+            end);
+
+          Describe('Struct arrays', procedure
+            begin
+              It('Should succeed if array item is present', procedure
+                begin
+                  TestGetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Bitangent X', '-1');
+                  TestGetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'UV', '0.500000 0.502930');
+                end);
+
+              It('Should return false if array item isn''t present', procedure
+                begin
+                  ExpectFailure(GetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Bitangent X', '-2', @h));
+                  ExpectFailure(GetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'UV', '0.500000 0.502931', @h));
+                end);
+            end);
+
+          It('Should fail if the element at path isn''t an array', procedure
+            begin
+              ExpectFailure(GetNifArrayItem(nif, '', '', 'Test', @h));
+              ExpectFailure(GetNifArrayItem(nif, 'BSFadeNode', '', 'Test', @h));
+            end);
+        end);           
 
       Describe('GetNifElementIndex', procedure
         begin

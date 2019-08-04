@@ -42,6 +42,9 @@ function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 function NifReferenceMatches(const ref: TwbNiRef; const value: String): Boolean;
 function NativeNifElementMatches(const element: TdfElement; const value: string): Boolean;
 
+function NativeGetNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
+function NativeGetNifArrayItemEx(const arr: TdfArray; const path, value: string): TdfElement;
+
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
 function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNifBlock;
 
@@ -73,6 +76,7 @@ function SetNifLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 function NifElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+function GetNifArrayItem(_id: Cardinal; path, subPath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -424,6 +428,31 @@ begin
     editValue := element.EditValue;
     Result := (TryStrToFloat(value, e1) and TryStrToFloat(editValue, e2) and (e1 = e2)) or (value = editValue);
   end;
+end;
+
+function NativeGetNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
+var
+  i: Integer;
+  element: TdfElement;
+begin
+  for i := 0 to Pred(arr.Count) do begin
+    Result := arr[i];
+    if path <> '' then begin
+      element := ResolveElement(Result, path);
+      if not Assigned(element) then break;
+    end
+    else
+      element := Result;
+    if NativeNifElementMatches(element, value) then exit;
+  end;
+  Result := nil;
+end;
+
+function NativeGetNifArrayItemEx(const arr: TdfArray; const path, value: string): TdfElement;
+begin
+  Result := NativeGetNifArrayItem(arr, path, value);
+  if not Assigned(Result) then
+    raise Exception.Create('Could not find matching array element.');
 end;
 
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
@@ -815,6 +844,23 @@ begin
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     bool^ := NativeNifElementMatches(element, value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifArrayItem(_id: Cardinal; path, subPath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not (element is TdfArray) then
+      raise Exception.Create('Element must be an array.');
+    _res^ := StoreObjects(NativeGetNifArrayItemEx(TdfArray(element), subPath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
