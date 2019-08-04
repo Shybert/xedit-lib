@@ -76,6 +76,7 @@ function SetNifLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 function NifElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+function HasNifArrayItem(_id: Cardinal; path, subPath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifArrayItem(_id: Cardinal; path, subPath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -844,6 +845,23 @@ begin
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
     bool^ := NativeNifElementMatches(element, value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function HasNifArrayItem(_id: Cardinal; path, subPath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not (element is TdfArray) then
+      raise Exception.Create('Element must be an array.');
+    bool^ := Assigned(NativeGetNifArrayItem(TdfArray(element), subPath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
