@@ -125,6 +125,19 @@ begin
   Expect(item > 0, 'Handle should be greater than 0');
 end;
 
+procedure TestAddNifArrayItem(h: Cardinal; path, subpath, value: PWideChar);
+var
+  item: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(AddNifArrayItem(h, path, subpath, value, @item));
+  Expect(item > 0, 'Handle should be greater than 0');
+  if value <> '' then begin
+    ExpectSuccess(GetNifValue(item, subpath, @len));
+    ExpectEqual(grs(len), string(value));
+  end;
+end;
+
 procedure TestGetNifLinksTo(h: Cardinal; path: PWideChar; expectedBlock: Cardinal);
 var
   block: Cardinal;
@@ -1140,6 +1153,63 @@ begin
               ExpectFailure(GetNifArrayItem(nif, 'BSFadeNode', '', 'Test', @h));
             end);
         end);     
+
+      Describe('AddNifArrayItem', procedure
+        begin
+          Describe('Value arrays', procedure
+            begin
+              It('Should add an array item', procedure
+                begin
+                  TestAddNifArrayItem(nif, 'Header\Strings', '', '');
+                  ExpectSuccess(GetNifElement(nif, 'Header\Strings', @h));
+                  TestNifElementCount(h, 12);
+                end);
+
+              It('Should be able to set the edit value', procedure
+                begin
+                  TestAddNifArrayItem(nif, 'Header\Strings', '', 'TestString');
+                  ExpectSuccess(GetNifElement(nif, 'Header\Strings', @h));
+                  TestNifElementCount(h, 13);
+                end);
+
+              It('Should work with references', procedure
+                begin
+                  TestAddNifArrayItem(childrenArray, '', '', '25 BSLightingShaderProperty');
+                  TestNifElementCount(childrenArray, 7);
+                end);
+            end);
+
+          Describe('Struct arrays', procedure
+            begin
+              BeforeAll(procedure
+                begin
+                  ExpectSuccess(GetNifElement(nif, 'BSTriShape\Vertex Data', @h));
+                end);
+
+              It('Should add an array item', procedure
+                begin
+                  TestAddNifArrayItem(h, '', '', '');
+                  TestNifElementCount(h, 112);
+                end);
+
+              It('Should be able to set value at subpath', procedure
+                begin
+                  TestAddNifArrayItem(h, '', 'Bitangent X', '-5.000000');
+                  TestNifElementCount(h, 113);
+                end);
+
+              It('Should fail if subpath is invalid', procedure
+                begin
+                  ExpectFailure(AddNifArrayItem(h, '', 'Fake\Path', '-5.000000', @h));
+                end);
+            end);
+
+          It('Should fail if the element at path isn''t an array', procedure
+            begin
+              ExpectFailure(AddNifArrayItem(nif, '', '', 'Test', @h));
+              ExpectFailure(AddNifArrayItem(nif, 'BSFadeNode', '', 'Test', @h));
+            end);
+        end);
 
       Describe('GetNifElementIndex', procedure
         begin

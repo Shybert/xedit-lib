@@ -37,6 +37,7 @@ function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElemen
 function ResolveFromNif(const nif: TwbNifFile; const path: string): TdfElement;
 function ResolvePath(const element: TdfElement; const path: string): TdfElement;
 function ResolveElement(const element: TdfElement; const path: String): TdfElement;
+function ResolveElementEx(const element: TdfElement; const path: String): TdfElement;
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
 function NifReferenceMatches(const ref: TwbNiRef; const value: String): Boolean;
@@ -44,6 +45,7 @@ function NativeNifElementMatches(const element: TdfElement; const value: string)
 
 function NativeGetNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
 function NativeGetNifArrayItemEx(const arr: TdfArray; const path, value: string): TdfElement;
+function NativeAddNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
 
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
 function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNifBlock;
@@ -78,6 +80,7 @@ function NifElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl
 function NifElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
 function HasNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -392,6 +395,13 @@ begin
   end;
 end;
 
+function ResolveElementEx(const element: TdfElement; const path: String): TdfElement;
+begin
+  Result := ResolveElement(element, path);
+  if not Assigned(Result) then
+    raise Exception.Create('Failed to resolve element at path: ' + path);
+end;
+
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 begin
   if string(path) = '' then
@@ -454,6 +464,20 @@ begin
   Result := NativeGetNifArrayItem(arr, path, value);
   if not Assigned(Result) then
     raise Exception.Create('Could not find matching array element.');
+end;
+
+function NativeAddNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
+var
+  element: TdfElement;
+begin
+  Result := arr.Add;
+  if value = '' then exit;
+  if path = '' then
+    Result.EditValue := value
+  else begin
+    element := ResolveElementEx(Result, path);
+    element.EditValue := value;
+  end;
 end;
 
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
@@ -879,6 +903,23 @@ begin
     if not (element is TdfArray) then
       raise Exception.Create('Element must be an array.');
     _res^ := StoreObjects(NativeGetNifArrayItemEx(TdfArray(element), subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function AddNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not (element is TdfArray) then
+      raise Exception.Create('Element must be an array.');
+    _res^ := StoreObjects(NativeAddNifArrayItem(TdfArray(element), subpath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
