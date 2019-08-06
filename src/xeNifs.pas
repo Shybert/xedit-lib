@@ -41,7 +41,7 @@ function ResolveElementEx(const element: TdfElement; const path: String): TdfEle
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 
 function NifReferenceMatches(const ref: TwbNiRef; const value: String): Boolean;
-function NativeNifElementMatches(const element: TdfElement; const value: string): Boolean;
+function NativeNifElementMatches(element: TdfElement; const path, value: string): Boolean;
 
 function NativeGetNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
 function NativeGetNifArrayItemEx(const arr: TdfArray; const path, value: string): TdfElement;
@@ -428,12 +428,17 @@ begin
   end;
 end;
 
-function NativeNifElementMatches(const element: TdfElement; const value: string): Boolean;
+function NativeNifElementMatches(element: TdfElement; const path, value: string): Boolean;
 var
   editValue: String;
   e1, e2: Extended;
 begin
-  if element is TwbNiRef then
+  if path <> '' then
+    element := ResolveElement(element, path);
+
+  if not Assigned(element) then
+    Result := False
+  else if element is TwbNiRef then
     Result := NifReferenceMatches(TwbNiRef(element), value)  
   else begin
     editValue := element.EditValue;
@@ -444,17 +449,10 @@ end;
 function NativeGetNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
 var
   i: Integer;
-  element: TdfElement;
 begin
   for i := 0 to Pred(arr.Count) do begin
     Result := arr[i];
-    if path <> '' then begin
-      element := ResolveElement(Result, path);
-      if not Assigned(element) then continue;
-    end
-    else
-      element := Result;
-    if NativeNifElementMatches(element, value) then exit;
+    if NativeNifElementMatches(Result, path, value) then exit;
   end;
   Result := nil;
 end;
@@ -868,7 +866,7 @@ begin
   try
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
-    bool^ := NativeNifElementMatches(element, value);
+    bool^ := NativeNifElementMatches(element, '', value);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
