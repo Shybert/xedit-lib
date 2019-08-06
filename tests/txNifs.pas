@@ -109,19 +109,19 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
-procedure TestHasNifArrayItem(h: Cardinal; path, subPath, value: PWideChar; expectedValue: WordBool = True);
+procedure TestHasNifArrayItem(h: Cardinal; path, subpath, value: PWideChar; expectedValue: WordBool = True);
 var
   b: WordBool;
 begin
-  ExpectSuccess(HasNifArrayItem(h, path, subPath, value, @b));
+  ExpectSuccess(HasNifArrayItem(h, path, subpath, value, @b));
   ExpectEqual(b, expectedValue);
 end;
 
-procedure TestGetNifArrayItem(h: Cardinal; path, subPath, value: PWideChar);
+procedure TestGetNifArrayItem(h: Cardinal; path, subpath, value: PWideChar);
 var
   item: Cardinal;
 begin
-  ExpectSuccess(GetNifArrayItem(h, path, subPath, value, @item));
+  ExpectSuccess(GetNifArrayItem(h, path, subpath, value, @item));
   Expect(item > 0, 'Handle should be greater than 0');
 end;
 
@@ -1061,7 +1061,7 @@ begin
 
       Describe('HasNifArrayItem', procedure
         begin
-          Describe('Value arrays', procedure
+          Describe('Without subpath', procedure
             begin
               It('Should return true if array item is present', procedure
                 begin
@@ -1076,18 +1076,20 @@ begin
                 end);
             end);
 
-          Describe('Struct arrays', procedure
+          Describe('With subpath', procedure
             begin
               It('Should return true if array item is present', procedure
                 begin
                   TestHasNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Bitangent X', '-1');
                   TestHasNifArrayItem(nif, 'BSTriShape\Vertex Data', 'UV', '0.500000 0.502930');
+                  TestHasNifArrayItem(childrenArray, '', '@\Num Triangles', '16');
                 end);
 
               It('Should return false if array item is not present', procedure
                 begin
                   TestHasNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Bitangent X', '-2', false);
                   TestHasNifArrayItem(nif, 'BSTriShape\Vertex Data', 'UV', '0.500000 0.502931', false);
+                  TestHasNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Wrong\Path', 'Also wrong', false);
                 end);
             end);
 
@@ -1100,7 +1102,7 @@ begin
 
       Describe('GetNifArrayItem', procedure
         begin
-          Describe('Value arrays', procedure
+          Describe('Without subpath', procedure
             begin
               It('Should succeed if array item is present', procedure
                 begin
@@ -1115,18 +1117,20 @@ begin
                 end);
             end);
 
-          Describe('Struct arrays', procedure
+          Describe('With subpath', procedure
             begin
               It('Should succeed if array item is present', procedure
                 begin
                   TestGetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Bitangent X', '-1');
                   TestGetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'UV', '0.500000 0.502930');
+                  TestGetNifArrayItem(childrenArray, '', '@\Num Triangles', '16');
                 end);
 
-              It('Should return false if array item isn''t present', procedure
+              It('Should fail if array item isn''t present', procedure
                 begin
                   ExpectFailure(GetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Bitangent X', '-2', @h));
                   ExpectFailure(GetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'UV', '0.500000 0.502931', @h));
+                  ExpectFailure(GetNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Wrong\Path', 'Also wrong', @h));
                 end);
             end);
 
@@ -1135,7 +1139,7 @@ begin
               ExpectFailure(GetNifArrayItem(nif, '', '', 'Test', @h));
               ExpectFailure(GetNifArrayItem(nif, 'BSFadeNode', '', 'Test', @h));
             end);
-        end);           
+        end);     
 
       Describe('GetNifElementIndex', procedure
         begin
