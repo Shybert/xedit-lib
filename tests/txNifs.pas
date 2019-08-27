@@ -138,6 +138,17 @@ begin
   end;
 end;
 
+procedure TestRemoveNifArrayItem(h: Cardinal; path, subpath, value: PWideChar);
+var
+  element: Cardinal;
+  count: Integer;
+begin
+  ExpectSuccess(GetNifElement(h, path, @element));
+  ExpectSuccess(NifElementCount(element, @count));
+  ExpectSuccess(RemoveNifArrayItem(h, path, subpath, value));
+  TestNifElementCount(element, count - 1);
+end;
+
 procedure TestGetNifLinksTo(h: Cardinal; path: PWideChar; expectedBlock: Cardinal);
 var
   block: Cardinal;
@@ -1208,6 +1219,39 @@ begin
             begin
               ExpectFailure(AddNifArrayItem(nif, '', '', 'Test', @h));
               ExpectFailure(AddNifArrayItem(nif, 'BSFadeNode', '', 'Test', @h));
+            end);
+        end);
+
+      Describe('RemoveNifArrayItem', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(LoadNif('xtest-1.nif', @h));
+            end);
+
+          Describe('Without subpath', procedure
+            begin
+              It('Should succeed if array item is present', procedure
+                begin
+                  TestRemoveNifArrayItem(h, 'BSFadeNode\Children', '', 'BSTriShape');
+                  TestRemoveNifArrayItem(h, 'Header\Strings', '', 'SteelShield');
+                end);
+            end);
+
+          Describe('With subpath', procedure
+            begin
+              It('Should succeed if array item is present', procedure
+                begin
+                  TestRemoveNifArrayItem(h, 'BSTriShape\Vertex Data', 'Bitangent X', '-1');
+                  TestRemoveNifArrayItem(h, 'BSTriShape\Vertex Data', 'UV', '0.300781 0.617188');
+                  TestRemoveNifArrayItem(h, 'BSFadeNode\Children', '@\Num Triangles', '16');
+                end);
+            end);
+
+          It('Should fail if the element at path isn''t an array', procedure
+            begin
+              ExpectFailure(RemoveNifArrayItem(nif, '', '', 'Test'));
+              ExpectFailure(RemoveNifArrayItem(nif, 'BSFadeNode', '', 'Test'));
             end);
         end);
 
