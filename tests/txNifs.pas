@@ -127,11 +127,15 @@ end;
 
 procedure TestAddNifArrayItem(h: Cardinal; path, subpath, value: PWideChar);
 var
-  item: Cardinal;
-  len: Integer;
+  arr, item: Cardinal;
+  currentArrLength, len: Integer;
 begin
+  ExpectSuccess(GetNifElement(h, path, @arr));
+  ExpectSuccess(NifElementCount(arr, @currentArrLength));
+
   ExpectSuccess(AddNifArrayItem(h, path, subpath, value, @item));
   Expect(item > 0, 'Handle should be greater than 0');
+  TestNifElementCount(arr, currentArrLength + 1);
   if value <> '' then begin
     ExpectSuccess(GetNifValue(item, subpath, @len));
     ExpectEqual(grs(len), string(value));
@@ -1167,49 +1171,38 @@ begin
 
       Describe('AddNifArrayItem', procedure
         begin
-          Describe('Value arrays', procedure
+          It('Should be able to add an array item', procedure
             begin
-              It('Should add an array item', procedure
-                begin
-                  TestAddNifArrayItem(nif, 'Header\Strings', '', '');
-                  ExpectSuccess(GetNifElement(nif, 'Header\Strings', @h));
-                  TestNifElementCount(h, 12);
-                end);
+              TestAddNifArrayItem(nif, 'Header\Strings', '', '');
+              TestAddNifArrayItem(nif, 'BSTriShape\Vertex Data', '', '');
+            end);
 
-              It('Should be able to set the edit value', procedure
+          Describe('Without subpath', procedure
+            begin
+              It('Should be able to set the value of the added array item', procedure
                 begin
                   TestAddNifArrayItem(nif, 'Header\Strings', '', 'TestString');
-                  ExpectSuccess(GetNifElement(nif, 'Header\Strings', @h));
-                  TestNifElementCount(h, 13);
                 end);
 
               It('Should work with references', procedure
                 begin
                   TestAddNifArrayItem(childrenArray, '', '', '25 BSLightingShaderProperty');
-                  TestNifElementCount(childrenArray, 7);
                 end);
             end);
 
-          Describe('Struct arrays', procedure
+          Describe('With subpath', procedure
             begin
-              BeforeAll(procedure
+              It('Should be able to set the value of the element at the subpath', procedure
                 begin
-                  ExpectSuccess(GetNifElement(nif, 'BSTriShape\Vertex Data', @h));
+                  TestAddNifArrayItem(nif, 'BSTriShape\Vertex Data', 'Bitangent X', '-5.000000');
                 end);
 
-              It('Should add an array item', procedure
+              It('Should work with references', procedure
                 begin
-                  TestAddNifArrayItem(h, '', '', '');
-                  TestNifElementCount(h, 112);
-                end);
+                  // TODO
+                end);                
 
-              It('Should be able to set value at subpath', procedure
-                begin
-                  TestAddNifArrayItem(h, '', 'Bitangent X', '-5.000000');
-                  TestNifElementCount(h, 113);
-                end);
-
-              It('Should fail if subpath is invalid', procedure
+              It('Should fail if the subpath is invalid', procedure
                 begin
                   ExpectFailure(AddNifArrayItem(h, '', 'Fake\Path', '-5.000000', @h));
                 end);
