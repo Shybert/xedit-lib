@@ -1001,10 +1001,12 @@ begin
   Result := False;
   try
     element := ResolveObjects(_id) as TdfElement;
+    if element is TwbNifFile then
+      raise Exception.Create('Element cannot be a nif file.');
     while not (element is TwbNifBlock) and Assigned(element.Parent) do
       element := element.Parent;
     if not (element is TwbNifBlock) then
-      raise Exception.Create('Element is not contained in a nif block.');
+      raise Exception.Create('Could not find the containing block for ' + element.Name);
     _res^ := StoreObjects(element);
     Result := True;
   except
