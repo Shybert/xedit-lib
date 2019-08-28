@@ -54,6 +54,8 @@ function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNif
 procedure NativeRemoveNifBlock(block: TwbNifBlock; recursive: WordBool);
 procedure NativeGetNifBlocks(element: TdfElement; search: String; lst: TList);
 
+function NativeGetNifContainer(element: TdfElement): TdfElement;
+
 function NativeIsNifHeader(const element: TdfElement): Boolean;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
 
@@ -86,6 +88,7 @@ function RemoveNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar): Wor
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+function GetNifContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
 function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function IsNiPtr(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
@@ -568,6 +571,13 @@ begin
     raise Exception.Create('Element must be a Nif file or a Nif block.');
 end;
 
+function NativeGetNifContainer(element: TdfElement): TdfElement;
+begin
+  Result := element.Parent;
+  if not Assigned(Result) then
+    raise Exception.Create('Could not find container for ' + element.Name);
+end;
+
 function NativeIsNifHeader(const element: TdfElement): Boolean;
 begin
   Result := element is TwbNifBlock and (TwbNifBlock(element).BlockType = 'NiHeader')
@@ -996,6 +1006,23 @@ begin
     if not (element is TwbNifBlock) then
       raise Exception.Create('Element is not contained in a nif block.');
     _res^ := StoreObjects(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    if NifElementNotFound(element, '') then exit;
+    if element is TwbNifFile then
+      raise Exception.Create('Element cannot be a nif file.');
+    _res^ := StoreObjects(NativeGetNifContainer(element));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

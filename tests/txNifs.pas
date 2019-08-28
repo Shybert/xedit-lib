@@ -190,6 +190,17 @@ begin
   TestNifElementEquals(block, expectedBlock);
 end;
 
+procedure TestGetNifContainer(h: Cardinal; path: PWideChar; expectedContainer: Cardinal);
+var
+  container: Cardinal;
+begin
+  if path <> '' then
+    ExpectSuccess(GetNifElement(h, path, @h));
+  ExpectSuccess(GetNifContainer(h, @container));
+  Expect(container > 0, 'Handle should be greater than 0');
+  TestNifElementEquals(container, expectedContainer);
+end;
+
 procedure TestGetNifBlockType(h: Cardinal; path, expectedBlockType: PWideChar);
 var
   block: Cardinal;
@@ -1330,6 +1341,34 @@ begin
               TestGetNifElementBlock(ref, rootNode);
             end);
         end);
+
+      Describe('GetNifContainer', procedure
+        begin
+          It('Should fail if the input is a nif file', procedure
+            begin
+              ExpectFailure(GetNifContainer(nif, @h));
+            end);
+
+          It('Should return the file containing a nif block', procedure
+            begin
+              TestGetNifContainer(rootNode, '', nif);
+              TestGetNifContainer(nif, 'Header', nif);
+            end);
+
+          It('Should return the block containing a block property', procedure
+            begin
+              TestGetNifContainer(childrenArray, '', rootNode);
+              TestGetNifContainer(transformStruct, '', rootNode);
+            end);
+
+          It('Should return the parent element containing a child element', procedure
+            begin
+              TestGetNifContainer(ref, '', childrenArray);
+              TestGetNifContainer(vector, '', transformStruct);
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Vertex Data\[0]', @h));
+              TestGetNifContainer(nif, 'BSTriShape\Vertex Data\[0]\UV', h);
+            end);
+        end);        
 
       Describe('GetNifTemplate', procedure
         begin
