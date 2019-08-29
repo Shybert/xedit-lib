@@ -153,6 +153,15 @@ begin
   TestNifElementCount(element, count - 1);
 end;
 
+procedure TestMoveNifArrayItem(h: Cardinal; index: Integer);
+var
+  newIndex: Integer;
+begin
+  ExpectSuccess(MoveNifArrayItem(h, index));
+  ExpectSuccess(GetNifElementIndex(h, @newIndex));
+  ExpectEqual(newIndex, index);
+end;
+
 procedure TestGetNifLinksTo(h: Cardinal; path: PWideChar; expectedBlock: Cardinal);
 var
   block: Cardinal;
@@ -1258,6 +1267,37 @@ begin
               ExpectFailure(RemoveNifArrayItem(nif, 'BSFadeNode', '', 'Test'));
             end);
         end);
+
+      Describe('MoveNifArrayItem', procedure
+        begin
+          It('Should move the array item to the provided index', procedure
+            begin
+              ExpectSuccess(GetNifElement(childrenArray, '[3]', @h));
+              TestMoveNifArrayItem(h, 5);
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Vertex Data\[7]', @h));
+              TestMoveNifArrayItem(h, 17);
+            end);
+
+          It('Should treat the index "-1" as the max index of the array', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Vertex Data\[5]', @h));
+              ExpectSuccess(MoveNifArrayItem(h, -1));
+              ExpectSuccess(GetNifElementIndex(h, @i));
+              ExpectEqual(i, 112);
+            end);
+
+          It('Should fail if the index is out of bounds', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Vertex Data\[0]', @h));
+              ExpectFailure(MoveNifArrayItem(h, -2));
+              ExpectFailure(MoveNifArrayItem(h, 9001));
+            end);
+
+          It('Should fail if the container isn''t an array', procedure
+            begin
+              ExpectFailure(MoveNifArrayItem(vector, 2));
+            end);
+        end);        
 
       Describe('GetNifElementIndex', procedure
         begin

@@ -47,6 +47,7 @@ function NativeGetNifArrayItem(const arr: TdfArray; const path, value: string): 
 function NativeGetNifArrayItemEx(const arr: TdfArray; const path, value: string): TdfElement;
 function NativeAddNifArrayItem(const arr: TdfArray; const path, value: string): TdfElement;
 procedure NativeRemoveNifArrayItem(const arr: TdfArray; const path, value: string);
+procedure NativeMoveNifArrayItem(const element: TdfElement; index: Integer);
 
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
 function AddBlockFromArray(const arr: TdfArray; const blockType: string): TwbNifBlock;
@@ -84,6 +85,7 @@ function NifElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBoo
 function HasNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 function AddNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+function MoveNifArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
 function RemoveNifArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
 function GetNifElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -492,6 +494,17 @@ begin
       arr[i].Remove;
       break;
     end;
+end;
+
+procedure NativeMoveNifArrayItem(const element: TdfElement; index: Integer);
+var
+  container: TdfElement;
+begin
+  container := NativeGetNifContainer(element);
+  if not (container is TdfArray) then
+    raise Exception.Create('Cannot move elements in non-array containers.');
+  if index = -1 then index := container.Count - 1;
+  container.Move(element.Index, index);
 end;
 
 function AddBlockFromReference(const ref: TwbNiRef; const blockType: string): TwbNifBlock;
@@ -958,6 +971,21 @@ begin
     if not (element is TdfArray) then
       raise Exception.Create('Element must be an array.');
     NativeRemoveNifArrayItem(TdfArray(element), subpath, value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function MoveNifArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    if NifElementNotFound(element, '') then exit;
+    NativeMoveNifArrayItem(element, index);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
