@@ -92,6 +92,7 @@ function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
+function HasNifBlockType(_id: Cardinal; path, blockType: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
 function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function IsNiPtr(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 
@@ -1053,6 +1054,22 @@ begin
     if element is TwbNifFile then
       raise Exception.Create('Element cannot be a nif file.');
     _res^ := StoreObjects(NativeGetNifContainer(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function HasNifBlockType(_id: Cardinal; path, blockType: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if not (element is TwbNifBlock) then
+      raise Exception.Create('Element must be a nif block.');
+    bool^ := TwbNifBlock(element).IsNiObject(blockType, _inherited);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

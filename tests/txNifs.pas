@@ -1410,6 +1410,48 @@ begin
             end);
         end);        
 
+     Describe('HasNifBlockType', procedure
+       begin
+         It('Should return true if the block has the provided block type', procedure
+           begin
+             ExpectSuccess(HasNifBlockType(rootNode, '', 'BSFadeNode', true, @b));
+             ExpectEqual(b, true);
+             ExpectSuccess(HasNifBlockType(nif, 'BSTriShape', 'BSTriShape', true, @b));
+             ExpectEqual(b, true);
+           end);
+
+         It('Should return true if the block''s block type is a descendant of the provided block type, if _inherited is true', procedure
+           begin
+             ExpectSuccess(HasNifBlockType(rootNode, '', 'NiNode', true, @b));
+             ExpectEqual(b, true);
+             ExpectSuccess(HasNifBlockType(nif, 'bhkRigidBody', 'bhkWorldObject', true, @b));
+             ExpectEqual(b, true);
+           end);
+
+         It('Should return false if the block''s block type is a descendant of the provided block type, but _inherited is false', procedure
+           begin
+             ExpectSuccess(HasNifBlockType(rootNode, '', 'NiNode', false, @b));
+             ExpectEqual(b, false);
+             ExpectSuccess(HasNifBlockType(nif, 'bhkRigidBody', 'bhkWorldObject', false, @b));
+             ExpectEqual(b, false);
+           end);
+
+         It('Should return false if the block''s block type neither equals the provided block type, nor is a descendant of it', procedure
+           begin
+             ExpectSuccess(HasNifBlockType(rootNode, '', 'BSTriShape', true, @b));
+             ExpectEqual(b, false);
+             ExpectSuccess(HasNifBlockType(nif, 'BSTriShape', 'NiNode', true, @b));
+             ExpectEqual(b, false);
+           end);           
+
+         It('Should fail if the input isn''t a nif block', procedure
+           begin
+             ExpectFailure(HasNifBlockType(nif, '', 'NiNode', true, @len));
+             ExpectFailure(HasNifBlockType(ref, '', 'NiNode', true, @len));
+             ExpectFailure(HasNifBlockType(vector, '', 'NiNode', true, @len));
+           end);
+       end);
+
       Describe('GetNifTemplate', procedure
         begin
           It('Should resolve the template of references', procedure
