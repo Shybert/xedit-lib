@@ -94,6 +94,7 @@ function GetNifContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
 function HasNifBlockType(_id: Cardinal; path, blockType: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
 function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifBlockTypeAllowed(_id: Cardinal; blockType: PWideChar; bool: PWordBool): WordBool; cdecl;
 function IsNiPtr(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 
 //Properties
@@ -1087,6 +1088,22 @@ begin
       raise Exception.Create('Element must be a reference.');
     resultStr := TwbNiRef(element).Template;
     len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifBlockTypeAllowed(_id: Cardinal; blockType: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    if not (element is TwbNiRef) then
+      raise Exception.Create('Element must be a reference.');
+    bool^ := wbIsNiObject(blockType, TwbNiRef(element).Template);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

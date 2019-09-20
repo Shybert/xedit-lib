@@ -210,6 +210,14 @@ begin
   TestNifElementEquals(container, expectedContainer);
 end;
 
+procedure TestGetNifBlockTypeAllowed(h: Cardinal; blockType: PWideChar; expectedResult: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(GetNifBlockTypeAllowed(h, blockType, @b));
+  ExpectEqual(b, expectedResult);
+end;
+
 procedure TestGetNifBlockType(h: Cardinal; path, expectedBlockType: PWideChar);
 var
   block: Cardinal;
@@ -1469,6 +1477,36 @@ begin
               ExpectFailure(GetNifTemplate(vector, '', @len));
             end);
         end);
+
+      Describe('GetNifBlockTypeAllowed', procedure
+        begin
+          It('Should return true if the block type is allowed', procedure
+            begin
+              TestGetNifBlockTypeAllowed(ref, 'NiAVObject', true);
+              TestGetNifBlockTypeAllowed(ref, 'BSFadeNode', true);
+              TestGetNifBlockTypeAllowed(ref, 'BSTriShape', true);
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Shader Property', @h));
+              TestGetNifBlockTypeAllowed(h, 'BSShaderProperty', true);
+              TestGetNifBlockTypeAllowed(h, 'BSLightingShaderProperty', true);
+            end);
+
+          It('Should return false if the block type isn''t allowed', procedure
+            begin
+              TestGetNifBlockTypeAllowed(ref, 'BSXFlags', false);
+              TestGetNifBlockTypeAllowed(ref, 'bhkCollisionObject', false);
+              TestGetNifBlockTypeAllowed(ref, 'BSShaderProperty', false);
+              ExpectSuccess(GetNifElement(nif, 'BSTriShape\Shader Property', @h));
+              TestGetNifBlockTypeAllowed(h, 'NiAVObject', false);
+              TestGetNifBlockTypeAllowed(h, 'BSFadeNode', false);
+            end);
+
+          It('Should fail if the input isn''t a reference', procedure
+            begin
+              ExpectFailure(GetNifBlockTypeAllowed(nif, 'BSFadeNode', @b));
+              ExpectFailure(GetNifBlockTypeAllowed(rootNode, 'BSFadeNode', @b));
+              ExpectFailure(GetNifBlockTypeAllowed(vector, 'BSFadeNode', @b));
+            end);
+        end);        
 
       Describe('IsNiPtr', procedure
         begin
