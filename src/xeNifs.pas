@@ -1103,6 +1103,8 @@ begin
     element := NativeGetNifElement(_id, path);
     if not (element is TwbNifBlock) then
       raise Exception.Create('Element must be a nif block.');
+    if not wbNiObjectExists(blockType) then
+      raise Exception.Create('"' + blockType + '" is not a valid block type.');
     bool^ := TwbNifBlock(element).IsNiObject(blockType, _inherited);
     Result := True;
   except

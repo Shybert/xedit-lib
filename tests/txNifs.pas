@@ -229,6 +229,14 @@ begin
   TestNifElementEquals(container, expectedContainer);
 end;
 
+procedure TestHasNifBlockType(h: Cardinal; path, blockType: PWideChar; _inherited: WordBool; expectedResult: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(HasNifBlockType(h, path, blockType, _inherited, @b));
+  ExpectEqual(b, expectedResult);
+end;
+
 procedure TestGetNifBlockTypeAllowed(h: Cardinal; blockType: PWideChar; expectedResult: WordBool);
 var
   b: WordBool;
@@ -1470,47 +1478,44 @@ begin
               ExpectSuccess(GetNifElement(nif, 'BSTriShape\Vertex Data\[0]', @h));
               TestGetNifContainer(nif, 'BSTriShape\Vertex Data\[0]\UV', h);
             end);
-        end);        
+        end);
 
      Describe('HasNifBlockType', procedure
        begin
          It('Should return true if the block has the provided block type', procedure
            begin
-             ExpectSuccess(HasNifBlockType(rootNode, '', 'BSFadeNode', true, @b));
-             ExpectEqual(b, true);
-             ExpectSuccess(HasNifBlockType(nif, 'BSTriShape', 'BSTriShape', true, @b));
-             ExpectEqual(b, true);
+             TestHasNifBlockType(rootNode, '', 'BSFadeNode', true, true);
+             TestHasNifBlockType(nif, 'BSTriShape', 'BSTriShape', true, true);
            end);
 
          It('Should return true if the block''s block type is a descendant of the provided block type, if _inherited is true', procedure
            begin
-             ExpectSuccess(HasNifBlockType(rootNode, '', 'NiNode', true, @b));
-             ExpectEqual(b, true);
-             ExpectSuccess(HasNifBlockType(nif, 'bhkRigidBody', 'bhkWorldObject', true, @b));
-             ExpectEqual(b, true);
+             TestHasNifBlockType(rootNode, '', 'NiNode', true, true);
+             TestHasNifBlockType(nif, 'bhkRigidBody', 'bhkWorldObject', true, true);
            end);
 
-         It('Should return false if the block''s block type is a descendant of the provided block type, but _inherited is false', procedure
+         It('Should return false even if the block''s block type is a descendant of the provided block type, if _inherited is false', procedure
            begin
-             ExpectSuccess(HasNifBlockType(rootNode, '', 'NiNode', false, @b));
-             ExpectEqual(b, false);
-             ExpectSuccess(HasNifBlockType(nif, 'bhkRigidBody', 'bhkWorldObject', false, @b));
-             ExpectEqual(b, false);
+             TestHasNifBlockType(rootNode, '', 'NiNode', false, false);
+             TestHasNifBlockType(nif, 'bhkRigidBody', 'bhkWorldObject', false, false);
            end);
 
          It('Should return false if the block''s block type neither equals the provided block type, nor is a descendant of it', procedure
            begin
-             ExpectSuccess(HasNifBlockType(rootNode, '', 'BSTriShape', true, @b));
-             ExpectEqual(b, false);
-             ExpectSuccess(HasNifBlockType(nif, 'BSTriShape', 'NiNode', true, @b));
-             ExpectEqual(b, false);
-           end);           
+             TestHasNifBlockType(rootNode, '', 'BSTriShape', true, false);
+             TestHasNifBlockType(nif, 'BSTriShape', 'NiNode', true, false);
+           end);
 
-         It('Should fail if the input isn''t a nif block', procedure
+         It('Should fail if the provided element isn''t a nif block', procedure
            begin
-             ExpectFailure(HasNifBlockType(nif, '', 'NiNode', true, @len));
-             ExpectFailure(HasNifBlockType(ref, '', 'NiNode', true, @len));
-             ExpectFailure(HasNifBlockType(vector, '', 'NiNode', true, @len));
+             ExpectFailure(HasNifBlockType(nif, '', 'NiNode', true, @b));
+             ExpectFailure(HasNifBlockType(ref, '', 'NiNode', true, @b));
+             ExpectFailure(HasNifBlockType(vector, '', 'NiNode', true, @b));
+           end);
+
+         It('Should fail if the provided block type doesn''t exist', procedure
+           begin
+             ExpectFailure(HasNifBlockType(rootNode, '', 'Invalid', true, @b));
            end);
        end);
 
