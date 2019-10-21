@@ -142,8 +142,8 @@ type
   end;
 
 function wbIsNiObject(const aNiObject, aTemplate: string): Boolean; overload;
-{
 function wbNiObjectExists(const aNiObject: string): Boolean;
+{
 procedure wbNiObjectCheckDups;
 }
 
@@ -381,12 +381,13 @@ begin
   NiObjectInfos.Add('', False, aDef, 0);
 end;
 
-{
+
 function wbNiObjectExists(const aNiObject: string): Boolean;
 begin
   Result := NiObjectInfos.IndexOf(aNiObject) <> -1;
 end;
 
+{
 procedure wbNiObjectCheckDups;
 
   procedure Check(d: TdfDef; const aParent: string);
