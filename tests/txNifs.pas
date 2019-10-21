@@ -229,6 +229,14 @@ begin
   TestNifElementEquals(container, expectedContainer);
 end;
 
+procedure TestIsNifBlockType(blockType, blockType2: PWideChar; _inherited: WordBool; expectedResult: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(IsNifBlockType(blockType, blockType2, _inherited, @b));
+  ExpectEqual(b, expectedResult);
+end;
+
 procedure TestHasNifBlockType(h: Cardinal; path, blockType: PWideChar; _inherited: WordBool; expectedResult: WordBool);
 var
   b: WordBool;
@@ -1479,6 +1487,37 @@ begin
               TestGetNifContainer(nif, 'BSTriShape\Vertex Data\[0]\UV', h);
             end);
         end);
+
+     Describe('IsNifBlockType', procedure
+       begin
+         It('Should return true if the block types are equal', procedure
+           begin
+             TestIsNifBlockType('BSFadeNode', 'BSFadeNode', true, true);
+           end);
+
+         It('Should return true if the first block type is a descendant of the second block type, if _inherited is true', procedure
+           begin
+             TestIsNifBlockType('BSFadeNode', 'NiNode', true, true);
+           end);
+
+         It('Should return false even if the first block type is a descendant of the second block type, if _inherited is false', procedure
+           begin
+             TestIsNifBlockType('BSFadeNode', 'NiNode', false, false);
+           end);
+
+         It('Should return false if the first block type neither equals the second block type, nor is a descendant of it', procedure
+           begin
+             TestIsNifBlockType('BSFadeNode', 'BSTriShape', true, false);
+             TestIsNifBlockType('BSFadeNode', 'BSTriShape', false, false);
+           end);           
+
+         It('Should fail if either of the two block types don''t exist', procedure
+           begin
+             ExpectFailure(IsNifBlockType('Invalid', 'NiNode', true, @len));
+             ExpectFailure(IsNifBlockType('NiNode', 'Invalid', true, @len));
+             ExpectFailure(IsNifBlockType('Invalid', 'Invalid', true, @len));
+           end);
+       end);
 
      Describe('HasNifBlockType', procedure
        begin

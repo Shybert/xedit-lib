@@ -93,6 +93,7 @@ function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
+function IsNifBlockType(blockType, blockType2: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
 function HasNifBlockType(_id: Cardinal; path, blockType: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
 function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifBlockTypeAllowed(_id: Cardinal; blockType: PWideChar; bool: PWordBool): WordBool; cdecl;
@@ -1088,6 +1089,25 @@ begin
     if element is TwbNifFile then
       raise Exception.Create('Element cannot be a nif file.');
     _res^ := StoreObjects(NativeGetNifContainer(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsNifBlockType(blockType, blockType2: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if not wbNiObjectExists(blockType) then
+      raise Exception.Create('"' + blockType + '" is not a valid block type.');
+    if not wbNiObjectExists(blockType2) then
+      raise Exception.Create('"' + blockType2 + '" is not a valid block type.');
+
+    if not _inherited then
+      bool^ := blockType = blockType2
+    else
+      bool^ := wbIsNiObject(blockType, blockType2);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
