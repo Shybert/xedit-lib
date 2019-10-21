@@ -10,6 +10,7 @@ uses
 implementation
 
 uses
+  Classes,
   Mahogany,
   txMeta,
 {$IFDEF USE_DLL}
@@ -160,6 +161,24 @@ begin
   ExpectSuccess(MoveNifArrayItem(h, index));
   ExpectSuccess(GetNifElementIndex(h, @newIndex));
   ExpectEqual(newIndex, index);
+end;
+
+procedure TestGetNifDefNames(h: Cardinal; enabledOnly: WordBool; names: TStringArray);
+var
+  len: Integer;
+  returnedNames: TStringList;
+  i: Integer;
+begin
+  ExpectSuccess(GetNifDefNames(h, enabledOnly, @len));
+  returnedNames := TStringList.Create;
+  try
+    returnedNames.Text := grs(len);
+    ExpectEqual(returnedNames.Count, High(names) + 1);
+    for i := 0 to Pred(returnedNames.Count) do
+      ExpectEqual(returnedNames[i], names[i]);
+  finally
+    returnedNames.Free;
+  end;
 end;
 
 procedure TestGetNifLinksTo(h: Cardinal; path: PWideChar; expectedBlock: Cardinal);
@@ -951,6 +970,41 @@ begin
               ExpectFailure(GetNifBlocks(ref, '', @len));
             end);
         end);
+
+      Describe('GetNifDefNames', procedure
+        begin
+          It('Should work with blocks', procedure
+            begin
+              TestGetNifDefNames(rootNode, True, TStringArray.Create('Name', 'Extra Data List', 'Controller', 'Flags', 
+                'Transform', 'Collision Object', 'Children', 'Effects'));
+              TestGetNifDefNames(rootNode, False, TStringArray.Create('Name', 'Extra Data', 'Extra Data List', 'Controller',
+                'Flags', 'Transform', 'Velocity', 'Properties', 'Has Bounding Volume', 'Bounding Volume',
+                'Collision Object', 'Children', 'Effects'));
+            end);
+
+          It('Should work with structs', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'Header\Export Info', @h));
+              TestGetNifDefNames(h, True, TStringArray.Create('Author', 'Process Script', 'Export Script'));
+              TestGetNifDefNames(h, False, TStringArray.Create('Unknown Int', 'Author', 'Process Script', 'Export Script'));
+            end);
+
+          It('Should work with arrays', procedure
+            begin
+              TestGetNifDefNames(childrenArray, True, TStringArray.Create('Children'));
+            end);
+
+          It('Should resolve unions', procedure
+            begin
+              ExpectSuccess(GetNifElement(nif, 'BSXFlags', @h));
+              TestGetNifDefNames(h, True, TStringArray.Create('Name', 'Flags'));
+            end);            
+
+          It('Should fail if the element is a nif file', procedure
+            begin
+              ExpectFailure(GetNifDefNames(nif, True, @len));
+            end);
+        end);        
 
       Describe('GetNifLinksTo', procedure
         begin

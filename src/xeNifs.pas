@@ -77,6 +77,7 @@ function AddNifBlock(_id: Cardinal; path, blockType: PWideChar; _res: PCardinal)
 function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 function MoveNifBlock(_id: Cardinal; path: PWideChar; newIndex: Integer): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifDefNames(_id: Cardinal; enabledOnly: WordBool; len: PInteger): WordBool; cdecl;
 function GetNifLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 function SetNifLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool; cdecl;
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
@@ -819,6 +820,38 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+function GetNifDefNames(_id: Cardinal; enabledOnly: WordBool; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+  names: TStringList;
+  i: Integer;
+begin
+  Result := False;
+  try
+    element := ResolveObjects(_id) as TdfElement;
+    if NifElementNotFound(element, '') then exit;
+    if element is TwbNifFile then
+      raise Exception.Create('Element cannot be a nif file.');
+    names := TStringList.Create;
+    try
+      if element.Def is TdfArrayDef then
+        names.Add(element.Def.Defs[0].Name)
+      else
+        for i := 0 to Pred(element.Count) do
+          if not enabledOnly or element[i].Enabled then
+            names.Add(element[i].Name);
+
+      resultStr := names.Text;
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      names.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;  
 end;
 
 function GetNifLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
