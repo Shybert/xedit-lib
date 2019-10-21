@@ -93,6 +93,7 @@ function GetNifElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifElementBlock(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 function GetNifContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
+function NifBlockTypeExists(blockType: PWideChar; bool: PWordBool): WordBool; cdecl;
 function IsNifBlockType(blockType, blockType2: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
 function HasNifBlockType(_id: Cardinal; path, blockType: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
 function GetNifTemplate(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -1094,6 +1095,17 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+
+function NifBlockTypeExists(blockType: PWideChar; bool: PWordBool): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    bool^ := wbNiObjectExists(blockType);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;  
 
 function IsNifBlockType(blockType, blockType2: PWideChar; _inherited: WordBool; bool: PWordBool): WordBool; cdecl;
 begin

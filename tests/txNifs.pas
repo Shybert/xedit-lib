@@ -229,6 +229,14 @@ begin
   TestNifElementEquals(container, expectedContainer);
 end;
 
+procedure TestNifBlockTypeExists(blockType: PWideChar; expectedResult: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(NifBlockTypeExists(blockType, @b));
+  ExpectEqual(b, expectedResult);
+end;
+
 procedure TestIsNifBlockType(blockType, blockType2: PWideChar; _inherited: WordBool; expectedResult: WordBool);
 var
   b: WordBool;
@@ -1487,6 +1495,21 @@ begin
               TestGetNifContainer(nif, 'BSTriShape\Vertex Data\[0]\UV', h);
             end);
         end);
+
+     Describe('NifBlockTypeExists', procedure
+       begin
+         It('Should return true if the block type exists', procedure
+           begin
+             TestNifBlockTypeExists('BSFadeNode', true);
+             TestNifBlockTypeExists('NiBSplinePoint3Interpolator', true);
+             TestNifBlockTypeExists('BSSkin::BoneData', true);
+           end);
+
+         It('Should return false if the block type doesn''t exist', procedure
+           begin
+             TestNifBlockTypeExists('Invalid', false);
+           end);
+       end);        
 
      Describe('IsNifBlockType', procedure
        begin
