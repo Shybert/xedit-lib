@@ -29,6 +29,9 @@ type
     dtVector3,
     dtVector4,
     dtQuaternion,
+    dtMatrix22,
+    dtMatrix33,
+    dtMatrix44,
     dtTexCoords,
     dtTriangle
   );
@@ -61,6 +64,9 @@ const
     0,  // dtVector3
     0,  // dtVector4
     0,  // dtQuaternion
+    0,  // dtMatrix22
+    0,  // dtMatrix33
+    0,  // dtMatrix44
     0,  // dtTexCoords
     0   // dtTriangle
   );
@@ -582,7 +588,8 @@ function dfCalcHash(const s: string): Cardinal;
 function dfStruct(
   const aName: string;
   const aDefs: array of TdfDef;
-  const aEvents: array of const
+  const aEvents: array of const;
+  const aDataType: TdfDataType = dtStruct
 ): TdfStructDef; overload;
 function dfStruct(const aName: string; const aDefs: array of TdfDef): TdfStructDef; overload;
 
@@ -3598,10 +3605,11 @@ end;
 function dfStruct(
   const aName: string;
   const aDefs: array of TdfDef;
-  const aEvents: array of const
+  const aEvents: array of const;
+  const aDataType: TdfDataType = dtStruct
 ): TdfStructDef;
 begin
-  Result := TdfStructDef.Create(aName, dtStruct, aDefs);
+  Result := TdfStructDef.Create(aName, aDataType, aDefs);
   Result.AssignEvents(aEvents);
 end;
 

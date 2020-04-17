@@ -546,7 +546,7 @@ begin
     dfFloat('m21'),
     dfFloat('m12'),
     dfFloat('m22', '1.0')
-  ], aEvents);
+  ], aEvents, dtMatrix22);
 end;
 
 function wbMatrix22(const aName: string): TdfDef; overload;
@@ -566,7 +566,7 @@ begin
     dfFloat('m13'),
     dfFloat('m23'),
     dfFloat('m33', '1.0')
-  ], aEvents);
+  ], aEvents, dtMatrix33);
 end;
 
 function wbMatrix33(const aName: string): TdfDef; overload;
@@ -641,7 +641,7 @@ begin
     dfFloat('m13'),
     dfFloat('m23'),
     dfFloat('m33', '1.0')
-  ], aEvents);
+  ], aEvents, dtMatrix33);
   Result.OnGetText := @RotMatrix33_GetText;
   Result.OnSetText := @RotMatrix33_SetText;
 end;
@@ -670,7 +670,7 @@ begin
     dfFloat('m24'),
     dfFloat('m34'),
     dfFloat('m44', '1.0')
-  ], aEvents);
+  ], aEvents, dtMatrix44);
 end;
 
 function wbMatrix44(const aName: string): TdfDef; overload;
@@ -693,7 +693,7 @@ begin
     dfFloat('m32'),
     dfFloat('m33', '1.0'),
     dfFloat('Unused m34')
-  ], aEvents);
+  ], aEvents, dtMatrix33);
 end;
 
 function wbhkMatrix3(const aName: string): TdfDef; overload;

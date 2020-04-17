@@ -17,6 +17,7 @@ function IsFileInContainer(const containerName, pathToFile: string): Boolean;
 
 function IsVector(element: TdfElement): Boolean;
 function IsQuaternion(element: TdfElement): Boolean;
+function IsMatrix(element: TdfElement): Boolean;
 function IsTexCoords(element: TdfElement): Boolean;
 function IsTriangle(element: TdfElement): Boolean;
 
@@ -60,6 +61,7 @@ function NativeGetNifContainer(element: TdfElement): TdfElement;
 function NativeIsNifHeader(const element: TdfElement): Boolean;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
 
+function NativeGetNifMatrix(const element: TdfElement): String;
 function GetMergedElementNativeValues(const element: TdfMerge): String;
 procedure SetMergedElementNativeValues(const element: TdfMerge; const json: String);
 {$endregion}
@@ -117,6 +119,7 @@ function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
 function GetNativeNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNativeNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
+function GetNifMatrix(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifTexCoords(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -207,6 +210,13 @@ end;
 function IsQuaternion(element: TdfElement): Boolean;
 begin
   Result := element.DataType = dtQuaternion;
+end;
+
+function IsMatrix(element: TdfElement): Boolean;
+begin
+  Result := (element.DataType = dtMatrix22)
+            or (element.DataType = dtMatrix33)
+            or (element.DataType = dtMatrix44);
 end;
 
 function IsTexCoords(element: TdfElement): Boolean;
@@ -603,6 +613,32 @@ end;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
 begin
   Result := element is TwbNifBlock and (TwbNifBlock(element).BlockType = 'NiFooter')
+end;
+
+function NativeGetNifMatrix(const element: TdfElement): String;
+var
+  matrix: TJSONArray;
+  matrixSize, i, j: Integer;
+begin
+  if (element.DataType = dtMatrix22) then matrixSize := 2
+  else if (element.DataType = dtMatrix33) then matrixSize := 3
+  else if (element.DataType = dtMatrix44) then matrixSize := 4
+  else raise Exception.Create('Element is not a matrix.');
+
+  matrix := TJSONArray.Create;
+  try
+    for i := 1 to matrixSize do begin
+      matrix.Add(TJSONArray.Create);
+      for j := 1 to matrixSize do
+        matrix.A[i - 1].Add(
+          Double(element.NativeValues['m' + IntToStr(i) + IntToStr(j)])
+        );
+    end;
+
+    Result := matrix.ToString;
+  finally
+    matrix.Free;
+  end;
 end;
 
 function GetMergedElementNativeValues(const element: TdfMerge): String;
@@ -1440,6 +1476,25 @@ begin
       raise Exception.Create('Element is not a quaternion.');
     SetMergedElementNativeValues(element as TdfMerge, coords);
     Result := True
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifMatrix(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not IsMatrix(element) then
+      raise Exception.Create('Element is not a matrix.');
+
+    resultStr := NativeGetNifMatrix(element);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

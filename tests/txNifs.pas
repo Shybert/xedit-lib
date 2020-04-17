@@ -1998,6 +1998,30 @@ begin
             end);
         end);
 
+      Describe('GetNifMatrix', procedure
+        begin
+          It('Should resolve matrices', procedure
+            begin
+              ExpectSuccess(GetNifMatrix(xt3, 'NiTexturingProperty\Bump Map Matrix', @len));
+              ExpectEqual(grs(len), '[[1,-1],[0,0.625]]');
+              ExpectSuccess(GetNifMatrix(xt3, 'NiTextureEffect\Model Projection Matrix', @len));
+              ExpectEqual(grs(len), '[[1,0,0],[0,1,0],[0,0,1]]');
+              ExpectSuccess(GetNifMatrix(xt3, 'bhkRigidBody\Inertia Tensor', @len));
+              ExpectEqual(grs(len), '[[1,0,-1],[1.125,-6.625,42],[-42,5,3.125]]');
+              ExpectSuccess(GetNifMatrix(xt3, 'BSFadeNode\Transform\Rotation', @len));
+              ExpectEqual(grs(len), '[[1,0,0],[0,1,0],[0,0,1]]');
+              ExpectSuccess(GetNifMatrix(xt3, 'bhksimpleShapePhantom\Transform', @len));
+              ExpectEqual(grs(len), '[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]');
+            end);
+
+           It('Should fail if the element isn''t a matrix', procedure
+             begin
+               ExpectFailure(GetNifMatrix(xt3, '', @len));
+               ExpectFailure(GetNifMatrix(xt3, 'BSFadeNode\Transform\Translation', @len));
+               ExpectFailure(GetNifMatrix(xt3, 'bhkRigidBody\Rotation', @len));
+             end);
+        end);
+
       Describe('GetNativeNifQuaternion', procedure
         begin
           BeforeAll(procedure
