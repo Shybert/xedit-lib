@@ -61,7 +61,9 @@ function NativeGetNifContainer(element: TdfElement): TdfElement;
 function NativeIsNifHeader(const element: TdfElement): Boolean;
 function NativeIsNifFooter(const element: TdfElement): Boolean;
 
+function GetNifMatrixSize(const element: TdfElement): Integer;
 function NativeGetNifMatrix(const element: TdfElement): String;
+procedure NativeSetNifMatrix(const element: TdfElement; const matrixJSON: String);
 function GetMergedElementNativeValues(const element: TdfMerge): String;
 procedure SetMergedElementNativeValues(const element: TdfMerge; const json: String);
 {$endregion}
@@ -120,6 +122,7 @@ function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBoo
 function GetNativeNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNativeNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifMatrix(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function SetNifMatrix(_id: Cardinal; path, matrix: PWideChar): WordBool; cdecl;
 function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifTexCoords(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -615,16 +618,20 @@ begin
   Result := element is TwbNifBlock and (TwbNifBlock(element).BlockType = 'NiFooter')
 end;
 
+function GetNifMatrixSize(const element: TdfElement): Integer;
+begin
+  if (element.DataType = dtMatrix22) then Result := 2
+  else if (element.DataType = dtMatrix33) then Result := 3
+  else if (element.DataType = dtMatrix44) then Result := 4
+  else raise Exception.Create('Element is not a matrix.');
+end;
+
 function NativeGetNifMatrix(const element: TdfElement): String;
 var
   matrix: TJSONArray;
   matrixSize, i, j: Integer;
 begin
-  if (element.DataType = dtMatrix22) then matrixSize := 2
-  else if (element.DataType = dtMatrix33) then matrixSize := 3
-  else if (element.DataType = dtMatrix44) then matrixSize := 4
-  else raise Exception.Create('Element is not a matrix.');
-
+  matrixSize := GetNifMatrixSize(element);
   matrix := TJSONArray.Create;
   try
     for i := 1 to matrixSize do begin
@@ -636,6 +643,22 @@ begin
     end;
 
     Result := matrix.ToString;
+  finally
+    matrix.Free;
+  end;
+end;
+
+procedure NativeSetNifMatrix(const element: TdfElement; const matrixJSON: String);
+var
+  matrix: TJSONArray;
+  matrixSize, i, j: Integer;
+begin
+  matrixSize := GetNifMatrixSize(element);
+  matrix := TJSONArray.Create(matrixJSON);
+  try
+    for i := 1 to matrixSize do
+      for j := 1 to matrixSize do
+        element.NativeValues['m' + IntToStr(i) + IntToStr(j)] := matrix.A[i - 1][j - 1].AsVariant;
   finally
     matrix.Free;
   end;
@@ -1494,6 +1517,24 @@ begin
 
     resultStr := NativeGetNifMatrix(element);
     len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetNifMatrix(_id: Cardinal; path, matrix: PWideChar): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    if not IsMatrix(element) then
+      raise Exception.Create('Element is not a matrix.');
+
+    NativeSetNifMatrix(element, matrix);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

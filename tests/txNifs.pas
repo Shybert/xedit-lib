@@ -307,6 +307,15 @@ begin
   ExpectEqual(grs(len), string(coordsJSON));
 end;
 
+procedure TestSetNifMatrix(h: Cardinal; path, matrix: PWideChar);
+var
+  len: Integer;
+begin
+  ExpectSuccess(SetNifMatrix(h, path, matrix));
+  ExpectSuccess(GetNifMatrix(h, path, @len));
+  ExpectEqual(grs(len), string(matrix));
+end;
+
 procedure TestGetNifFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
 var
   b: WordBool;
@@ -2005,13 +2014,13 @@ begin
               ExpectSuccess(GetNifMatrix(xt3, 'NiTexturingProperty\Bump Map Matrix', @len));
               ExpectEqual(grs(len), '[[1,-1],[0,0.625]]');
               ExpectSuccess(GetNifMatrix(xt3, 'NiTextureEffect\Model Projection Matrix', @len));
-              ExpectEqual(grs(len), '[[1,0,0],[0,1,0],[0,0,1]]');
+              ExpectEqual(grs(len), '[[-1,2,3],[4,5,42],[6.625,2,-0.125]]');
               ExpectSuccess(GetNifMatrix(xt3, 'bhkRigidBody\Inertia Tensor', @len));
               ExpectEqual(grs(len), '[[1,0,-1],[1.125,-6.625,42],[-42,5,3.125]]');
               ExpectSuccess(GetNifMatrix(xt3, 'BSFadeNode\Transform\Rotation', @len));
-              ExpectEqual(grs(len), '[[1,0,0],[0,1,0],[0,0,1]]');
+              ExpectEqual(grs(len), '[[9,8,7],[-1,-2,-3.125],[0.125,6,-3]]');
               ExpectSuccess(GetNifMatrix(xt3, 'bhksimpleShapePhantom\Transform', @len));
-              ExpectEqual(grs(len), '[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]');
+              ExpectEqual(grs(len), '[[3,4,5,6],[-3,-4,-5,-6],[42,-42,42.125,42.625],[0,-1,0,1]]');
             end);
 
            It('Should fail if the element isn''t a matrix', procedure
@@ -2021,6 +2030,61 @@ begin
                ExpectFailure(GetNifMatrix(xt3, 'bhkRigidBody\Rotation', @len));
              end);
         end);
+
+      Describe('SetNifMatrix', procedure
+        begin
+          It('Should be able to set matrices', procedure
+            begin
+              TestSetNifMatrix(xt3, 'NiTexturingProperty\Bump Map Matrix',
+                '[[-3,-1.125],[0,6.625]]'
+              );
+              TestSetNifMatrix(xt3, 'NiTextureEffect\Model Projection Matrix',
+                '[[1,-1,23],[42,-42,1.125],[42.625,0,3]]'
+              );
+              TestSetNifMatrix(xt3, 'bhkRigidBody\Inertia Tensor',
+                '[[2,-2,5],[8,-3,1],[0,3.625,1.125]]'
+              );
+              TestSetNifMatrix(xt3, 'BSFadeNode\Transform\Rotation',
+                '[[7,5,2],[42,-3.125,2],[1,0,-1]]'
+              );              
+              TestSetNifMatrix(xt3, 'bhksimpleShapePhantom\Transform',
+                '[[1,2,3,4],[5,6.625,7,42],[-3,2,1,6],[23,6,7,1]]'
+              );                            
+            end);
+
+          It('Should fail if the provided matrix is too small', procedure
+            begin
+              ExpectFailure(SetNifMatrix(xt3, 'BSFadeNode\Transform\Rotation',
+                '[[1,0],[0,1]]'
+              ));            
+              ExpectFailure(SetNifMatrix(xt3, 'bhksimpleShapePhantom\Transform',
+                '[[1,0],[0,1]]'
+              ));
+              ExpectFailure(SetNifMatrix(xt3, 'bhksimpleShapePhantom\Transform',
+                '[[1,0,0],[0,1,0],[0,0,1]]'
+              ));              
+            end);          
+
+          It('Should fail if the JSON values are invalid', procedure
+            begin
+              ExpectFailure(SetNifMatrix(xt3, 'NiTexturingProperty\Bump Map Matrix',
+                '[["string",[]],[null,0]]'
+              ));            
+            end);
+
+          It('Should fail if the JSON is invalid', procedure
+            begin
+              ExpectFailure(SetNifMatrix(xt3, 'NiTexturingProperty\Bump Map Matrix', 'invalid'));  
+              ExpectFailure(SetNifMatrix(xt3, 'NiTexturingProperty\Bump Map Matrix', '{"matrix":[]}'));             
+            end);
+
+          It('Should fail if the element isn''t a matrix', procedure
+            begin
+              ExpectFailure(SetNifMatrix(xt3, '', '[[1,0],[0,1]]'));
+              ExpectFailure(SetNifMatrix(xt3, 'BSFadeNode\Transform\Translation', '[[1,0],[0,1]]'));
+              ExpectFailure(SetNifMatrix(xt3, 'bhkRigidBody\Rotation', '[[1,0],[0,1]]'));
+            end);
+        end);        
 
       Describe('GetNativeNifQuaternion', procedure
         begin
