@@ -3858,6 +3858,7 @@ end;
 //===========================================================================
 { NiTexturingProperty }
 function NiTexturingProperty_EnFlags(const e: TdfElement): Boolean; begin with nif(e) do Result := (Version <= v10012) or (Version >= v20103); end;
+function NiTexturingProperty_EnApplyMode(const e: TdfElement): Boolean; begin with nif(e) do Result := Version <= v20101; end;
 function NiTexturingProperty_EnAmbientColor(const e: TdfElement): Boolean; begin with nif(e) do Result := not ((Version = v20207) and (UserVersion >= 11) and (UserVersion2 > 21)); end;
 function NiTexturingProperty_EnEmitMult(const e: TdfElement): Boolean; begin with nif(e) do Result := (Version = v20207) and (UserVersion >= 11) and (UserVersion2 > 21); end;
 function NiTexturingProperty_EnBaseTexture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Base Texture'] <> 0; end;
@@ -3865,15 +3866,19 @@ function NiTexturingProperty_EnDarkTexture(const e: TdfElement): Boolean; begin 
 function NiTexturingProperty_EnDetailTexture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Detail Texture'] <> 0; end;
 function NiTexturingProperty_EnGlossTexture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Gloss Texture'] <> 0; end;
 function NiTexturingProperty_EnGlowTexture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Glow Texture'] <> 0; end;
+function NiTexturingProperty_EnHasBumpMapTexture(const e: TdfElement): Boolean; begin with nif(e) do Result := e.NativeValues['..\Texture Count'] >= 6; end;
 function NiTexturingProperty_EnBumpMapTexture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Bump Map Texture'] <> 0; end;
-function NiTexturingProperty_EnNormalTexture(const e: TdfElement): Boolean; begin Result := (nif(e).Version >= v20207) and (e.NativeValues['..\Has Normal Texture'] <> 0); end;
-function NiTexturingProperty_EnUnknown2Texture(const e: TdfElement): Boolean; begin Result := (nif(e).Version >= v20207) and (e.NativeValues['..\Has Unknown2 Texture'] <> 0); end;
+function NiTexturingProperty_EnHasNormalTexture(const e: TdfElement): Boolean; begin with nif(e) do Result := (nif(e).Version >= v20205) and (e.NativeValues['..\Texture Count'] >= 7); end;
+function NiTexturingProperty_EnNormalTexture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Normal Texture'] <> 0; end;
+function NiTexturingProperty_EnHasParallaxTexture(const e: TdfElement): Boolean; begin with nif(e) do Result := (nif(e).Version >= v20205) and (e.NativeValues['..\Texture Count'] >= 8); end;
+function NiTexturingProperty_EnParallax(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Parallax Texture'] <> 0; end;
+function NiTexturingProperty_EnHasDecal0Texture(const e: TdfElement): Boolean; begin with nif(e) do Result := ((Version < v20205) and (e.NativeValues['..\Texture Count'] >= 7)) or ((Version >= v20205) and (e.NativeValues['..\Texture Count'] >= 9)); end;
 function NiTexturingProperty_EnDecal0Texture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Decal 0 Texture'] <> 0; end;
-function NiTexturingProperty_EnHasDecal1Texture(const e: TdfElement): Boolean; begin with nif(e) do Result := ((Version <= v20103) and (e.NativeValues['..\Texture Count'] >= 8)) or ((Version >= v20207) and (e.NativeValues['..\Texture Count'] >= 10)); end;
+function NiTexturingProperty_EnHasDecal1Texture(const e: TdfElement): Boolean; begin with nif(e) do Result := ((Version < v20205) and (e.NativeValues['..\Texture Count'] >= 8)) or ((Version >= v20205) and (e.NativeValues['..\Texture Count'] >= 10)); end;
 function NiTexturingProperty_EnDecal1Texture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Decal 1 Texture'] <> 0; end;
-function NiTexturingProperty_EnHasDecal2Texture(const e: TdfElement): Boolean; begin with nif(e) do Result := ((Version <= v20103) and (e.NativeValues['..\Texture Count'] >= 9)) or ((Version >= v20207) and (e.NativeValues['..\Texture Count'] >= 11)); end;
+function NiTexturingProperty_EnHasDecal2Texture(const e: TdfElement): Boolean; begin with nif(e) do Result := ((Version < v20205) and (e.NativeValues['..\Texture Count'] >= 9)) or ((Version >= v20205) and (e.NativeValues['..\Texture Count'] >= 11)); end;
 function NiTexturingProperty_EnDecal2Texture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Decal 2 Texture'] <> 0; end;
-function NiTexturingProperty_EnHasDecal3Texture(const e: TdfElement): Boolean; begin with nif(e) do Result := ((Version <= v20103) and (e.NativeValues['..\Texture Count'] >= 10)) or ((Version >= v20207) and (e.NativeValues['..\Texture Count'] >= 12)); end;
+function NiTexturingProperty_EnHasDecal3Texture(const e: TdfElement): Boolean; begin with nif(e) do Result := ((Version < v20205) and (e.NativeValues['..\Texture Count'] >= 10)) or ((Version >= v20205) and (e.NativeValues['..\Texture Count'] >= 12)); end;
 function NiTexturingProperty_EnDecal3Texture(const e: TdfElement): Boolean; begin Result := e.NativeValues['..\Has Decal 3 Texture'] <> 0; end;
 
 procedure wbDefineNiTexturingProperty;
@@ -3881,7 +3886,7 @@ begin
   wbNiObject(wbNifBlock('NiTexturingProperty', [
     dfInteger('Flags', dtU16, '', [DF_OnGetEnabled, @NiTexturingProperty_EnFlags]),
     wbApplyMode('Apply Mode', 'APPLY_MODULATE', [DF_OnGetEnabled, @EnBefore20005]),
-    dfInteger('Texture Count', dtU32),
+    dfInteger('Texture Count', dtU32, '7'),
     wbBool('Has Base Texture'),
     wbTexDesc('Base Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnBaseTexture]),
     wbBool('Has Dark Texture'),
@@ -3892,16 +3897,17 @@ begin
     wbTexDesc('Gloss Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnGlossTexture]),
     wbBool('Has Glow Texture'),
     wbTexDesc('Glow Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnGlowTexture]),
-    wbBool('Has Bump Map Texture'),
+    wbBool('Has Bump Map Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnHasBumpMapTexture]),
     wbTexDesc('Bump Map Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnBumpMapTexture]),
     dfFloat('Bump Map Luma Scale', [DF_OnGetEnabled, @NiTexturingProperty_EnBumpMapTexture]),
     dfFloat('Bump Map Luma Offset', [DF_OnGetEnabled, @NiTexturingProperty_EnBumpMapTexture]),
     wbMatrix22('Bump Map Matrix', [DF_OnGetEnabled, @NiTexturingProperty_EnBumpMapTexture]),
-    wbBool('Has Normal Texture', [DF_OnGetEnabled, @EnSince20207]),
+    wbBool('Has Normal Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnHasNormalTexture]),
     wbTexDesc('Normal Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnNormalTexture]),
-    wbBool('Has Unknown2 Texture', [DF_OnGetEnabled, @EnSince20207]),
-    wbTexDesc('Unknown2 Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnUnknown2Texture]),
-    wbBool('Has Decal 0 Texture'),
+    wbBool('Has Parallax Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnHasParallaxTexture]),
+    wbTexDesc('Parallax Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnParallax]),
+    dfFloat('Parallax Offset', [DF_OnGetEnabled, @NiTexturingProperty_EnParallax]),
+    wbBool('Has Decal 0 Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnHasDecal0Texture]),
     wbTexDesc('Decal 0 Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnDecal0Texture]),
     wbBool('Has Decal 1 Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnHasDecal1Texture]),
     wbTexDesc('Decal 1 Texture', [DF_OnGetEnabled, @NiTexturingProperty_EnDecal1Texture]),
