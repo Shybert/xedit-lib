@@ -11,6 +11,7 @@ implementation
 
 uses
   Classes,
+  Argo,
   Mahogany,
   txMeta,
 {$IFDEF USE_DLL}
@@ -350,6 +351,11 @@ begin
   ExpectEqual(grs(len), expectedOptions);
 end;
 
+procedure ExpectExists(obj: TJSONObject; key: string);
+begin
+  Expect(obj.HasKey(key), key + ' should exist');
+end;
+
 procedure DeleteNifs(filePaths: TStringArray);
 var
   i: Integer;
@@ -365,6 +371,7 @@ var
   len, i: Integer;
   f: Double;
   str: String;
+  obj, obj2: TJSONObject;
 begin
   Describe('Nif File Handling Functions', procedure
     begin
@@ -2410,7 +2417,161 @@ begin
               ExpectSuccess(IsNifFooter(vector, @b));
               ExpectEqual(b, false);
             end);
-        end);        
+        end);
+
+      Describe('NifElementToJson', procedure
+        begin
+          Describe('File serialization', procedure
+          begin
+            AfterAll(procedure
+              begin
+                obj.Free;
+              end);
+
+              It('Should succeed', procedure
+                begin
+                  ExpectSuccess(NifElementToJson(nif, '', @len));
+                  obj := TJSONObject.Create(grs(len));
+                end, True);
+
+              It('Should have the expected number of blocks', procedure
+              begin
+                ExpectEqual(obj.Count, 32);
+              end);
+
+              Describe('NiHeader', procedure
+                begin
+                  It('Should be present', procedure
+                    begin
+                      ExpectExists(obj, 'NiHeader');
+                      obj2 := obj.O['NiHeader'];
+                    end, true);
+
+                  It('Should have the correct version', procedure
+                    begin
+                      ExpectEqual(obj2.S['Magic'], 'Gamebryo File Format, Version 20.2.0.7');
+                    end);
+
+                  It('Should have the expected number of blocks (excluding header and footer)', procedure
+                    begin
+                      ExpectEqual(obj2.I['Num Blocks'], 30);
+                    end);                    
+
+                  It('Should have the expected block types', procedure
+                    const
+                      ExpectedBlockTypes: array[0..11] of string = (
+                        'BSFadeNode',
+                        'BSFurnitureMarkerNode',
+                        'BSXFlags',
+                        'bhkCompressedMeshShapeData',
+                        'bhkCompressedMeshShape',
+                        'bhkMoppBvTreeShape',
+                        'bhkRigidBody',
+                        'bhkCollisionObject',
+                        'NiNode',
+                        'BSTriShape',
+                        'BSLightingShaderProperty',
+                        'BSShaderTextureSet'
+                      );
+                    var
+                      i: Integer;
+                    begin
+                      for i := Low(ExpectedBlockTypes) to High(ExpectedBlockTypes) do
+                        ExpectEqual(obj2.A['Block Types'].S[i], ExpectedBlockTypes[i]);
+                    end);                    
+                end);
+
+              It('Should have a NiFooter', procedure
+                begin
+                  ExpectExists(obj, 'NiFooter');
+                end);             
+          end);
+
+          It('Should serialize blocks as objects with each element as a property', procedure
+          begin
+            ExpectSuccess(NifElementToJson(xt3, 'BSXFlags', @len));
+            ExpectEqual(grs(len), '{"1 BSXFlags":{"Name":"BSX","Flags":"Complex | Dynamic | Articulated"}}');                
+          end);
+
+          Describe('Element serialization', procedure
+          begin
+            It('Should serialize integers as their native value', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'Header\User Version', @len));
+                ExpectEqual(grs(len), '{"User Version":12}');              
+              end);
+
+            It('Should serialize floats as their native value', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'BSFadeNode\Transform\Scale', @len));
+                ExpectEqual(grs(len), '{"Scale":20}');
+              end);
+
+            It('Should serialize integers and floats with FOnGetTexts as their edit value', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'Header\Version', @len));
+                ExpectEqual(grs(len), '{"Version":"20.2.0.7"}');
+                ExpectSuccess(NifElementToJson(xt3, 'BSFadeNode\Children\[0]', @len));
+                ExpectEqual(grs(len), '{"Children #0":"3 BSTriShape \"Blocky McBlockFace\""}');                     
+              end);
+
+            It('Should serialize flags as |-seperated strings', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'BSLightingShaderProperty\Shader Flags 1', @len));
+                ExpectEqual(grs(len), '{"Shader Flags 1":"Specular | Recieve_Shadows | Cast_Shadows | Own_Emit | Remappable_Textures | ZBuffer_Test"}');                  
+              end);
+
+            It('Should serialize enums as strings', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'Header\Endian Type', @len));
+                ExpectEqual(grs(len), '{"Endian Type":"ENDIAN_LITTLE"}');                   
+              end);      
+
+            It('Should serialize value unions as strings', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'bhkPlaneShape\Material', @len));
+                ExpectEqual(grs(len), '{"Material":"SKY_HAV_MAT_STONE"}');                  
+              end);                                                             
+
+            It('Should serialize chars as strings', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'Header\Magic', @len));
+                ExpectEqual(grs(len), '{"Magic":"Gamebryo File Format, Version 20.2.0.7"}');
+              end);
+
+            It('Should serialize byte arrays as strings', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'bhkRigidBody\Unknown Bytes 1', @len));
+                ExpectEqual(grs(len), '{"Unknown Bytes 1":"FF 22 00 42 00 45 03 2A 00 37 00 01"}');
+              end);          
+
+            It('Should serialize the active element of a union', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'BSXFlags\Flags', @len));  
+                ExpectEqual(grs(len), '{"Flags":"Complex | Dynamic | Articulated"}');                    
+              end);                            
+
+            It('Should serialize merges as objects with each virtual child element as a property', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'BSTriShape\Transform\Translation', @len));  
+                ExpectEqual(grs(len), '{"Translation":{"X":1.125,"Y":-5,"Z":200}}');
+                ExpectSuccess(NifElementToJson(xt3, 'BSLightingShaderProperty\UV Scale', @len));  
+                ExpectEqual(grs(len), '{"UV Scale":{"U":-23,"V":42}}');                        
+              end);      
+
+            It('Should serialize structs as objects with each child element as a property', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'Header\Export Info', @len));
+                ExpectEqual(grs(len), '{"Export Info":{"Author":"Shybert","Process Script":"No","Export Script":"Yes"}}');
+              end);                                      
+
+            It('Should serialize arrays properly', procedure
+              begin
+                ExpectSuccess(NifElementToJson(xt3, 'BSShaderTextureSet\Textures', @len));
+                ExpectEqual(grs(len), '{"Textures":["textures.exe","galore.jpg","3.png","4.png","5.png","6.png"]}');                
+              end);         
+          end);
+        end);             
   end);
 end;
 end.

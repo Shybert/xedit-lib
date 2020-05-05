@@ -32,6 +32,7 @@ type
   public
     property Template: string read GetTemplate;
     property Ptr: Boolean read GetPtr;
+    procedure SerializeToJSON(const aJSON: TJSONBaseObject); override;
   end;
 
   TwbNifBlock = class;
@@ -2149,6 +2150,10 @@ begin
   Result := TwbNiRefDef(Def).Ptr;
 end;
 
+procedure TwbNiRef.SerializeToJSON(const aJSON: TJSONBaseObject);
+begin
+  if Enabled then EditValueToJSON(aJSON);
+end;
 
 procedure wbNiRef_OnCreate(const aElement: TdfElement);
 begin

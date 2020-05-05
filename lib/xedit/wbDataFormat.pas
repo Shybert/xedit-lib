@@ -275,6 +275,8 @@ type
     procedure SetNativeValue(const aValue: Variant); override;
     function GetEditValue: string; override;
     procedure SetEditValue(const aValue: string); override;
+    procedure NativeValueToJSON(const aJSON: TJsonBaseObject);
+    procedure EditValueToJSON(const aJSON: TJsonBaseObject);
   public
     procedure AllocateValue(var aDataStart, aDataEnd: PByte; aLength: Integer); overload;
     procedure AllocateValue(aLength: Integer); overload;
@@ -447,6 +449,7 @@ type
     function Updating: Boolean; override;
     // apply default values of individual elements
     function UnSerialize(const aDataStart, aDataEnd: Pointer; const aDataSize: Integer): Integer; override;
+    procedure SerializeToJSON(const aJSON: TJSONBaseObject); override;
     // override to access by name or index as a virtual child element
     function GetNativeValues(const aPath: string): Variant; override;
     procedure SetNativeValues(const aPath: string; const aValue: Variant); override;
@@ -465,7 +468,9 @@ type
     procedure SetElementEditValue(const aElement: TdfElement; aDataStart, aDataEnd: PByte; var aValue: string); override;
   end;
 
-  TdfInteger = class(TdfValue);
+  TdfInteger = class(TdfValue)
+    procedure SerializeToJSON(const aJSON: TJSONBaseObject); override;
+  end;
 
 
   { Mapped Integer: flags, enums }
@@ -510,6 +515,8 @@ type
     procedure SetNativeValues(const aPath: string; const aValue: Variant); override;
     function GetEditValues(const aPath: string): string; override;
     procedure SetEditValues(const aPath: string; const aValue: string); override;
+  public
+    procedure SerializeToJSON(const aJSON: TJSONBaseObject); override;
   end;
 
 
@@ -521,7 +528,9 @@ type
     procedure SetElementEditValue(const aElement: TdfElement; aDataStart, aDataEnd: PByte; var aValue: string); override;
   end;
 
-  TdfEnum = class(TdfInteger);
+  TdfEnum = class(TdfInteger)
+    procedure SerializeToJSON(const aJSON: TJSONBaseObject); override;
+  end;
 
 
   { Float }
@@ -534,8 +543,9 @@ type
     procedure SetElementEditValue(const aElement: TdfElement; aDataStart, aDataEnd: PByte; var aValue: string); override;
   end;
 
-  TdfFloat = class(TdfValue);
-
+  TdfFloat = class(TdfValue)
+    procedure SerializeToJSON(const aJSON: TJSONBaseObject); override;
+  end;
 
   { Bytes }
   TdfBytesDef = class(TdfValueDef)
@@ -1592,13 +1602,25 @@ begin
   inherited;
 end;
 
+procedure TdfValue.NativeValueToJSON(const aJSON: TJsonBaseObject);
+begin
+  if aJSON is TJSONObject then
+      TJSONObject(aJSON)[Name] := NativeValue
+  else if aJSON is TJSONArray then
+    TJSONArray(aJSON).Add(NativeValue)
+end;
+
+procedure TdfValue.EditValueToJSON(const aJSON: TJsonBaseObject);
+begin
+  if aJSON is TJSONObject then
+      TJSONObject(aJSON).S[Name] := EditValue
+  else if aJSON is TJSONArray then
+    TJSONArray(aJSON).Add(EditValue)
+end;
+
 procedure TdfValue.SerializeToJSON(const aJSON: TJSONBaseObject);
 begin
-  if Enabled then
-    if aJSON is TJSONObject then
-      TJSONObject(aJSON).S[Name] := EditValue
-    else if aJSON is TJSONArray then
-      TJSONArray(aJSON).Add(EditValue);
+  if Enabled then EditValueToJSON(aJSON);
 end;
 
 procedure TdfValue.Assign(const aElement: TdfElement);
@@ -2435,10 +2457,7 @@ end;
 procedure TdfUnion.SerializeToJSON(const aJSON: TJSONBaseObject);
 begin
   if Enabled then
-    if aJSON is TJSONObject then
-      TJSONObject(aJSON).S[Name] := EditValue
-    else if aJSON is TJSONArray then
-      TJSONArray(aJSON).Add(EditValue);
+    Items[ActiveIndex].SerializeToJSON(aJSON);
 end;
 
 procedure TdfUnion.Assign(const aElement: TdfElement);
@@ -2609,6 +2628,30 @@ begin
         Value := FDef.Defs[i].DefaultValue;
         Defs[i].SetElementEditValue(Self, FDataStart + ValueOffset[i], FDataStart + ValueOffset[i] + ValueDataSize[i], Value);
       end;
+end;
+
+procedure TdfMerge.SerializeToJSON(const aJSON: TJSONBaseObject);
+var
+  o: TJSONObject;
+  i: integer;
+  v: Variant;
+begin
+  if not Enabled then
+    Exit;
+
+  if aJSON is TJSONArray then
+    o := TJSONArray(aJSON).AddObject
+  else
+    o := TJSONObject.Create;
+
+  with TdfMergeDef(FDef) do
+    for i := Low(Defs) to High(Defs) do begin
+      Defs[i].GetElementNativeValue(Self, FDataStart + ValueOffset[i], FDataStart + ValueOffset[i] + ValueDataSize[i], v);
+      o[Defs[i].Name] := v;
+    end;
+
+  if aJSON is TJSONObject then
+    TJSONObject(aJSON).O[Name] := o;
 end;
 
 function TdfMerge.GetNativeValues(const aPath: string): Variant;
@@ -2786,6 +2829,12 @@ begin
   end;
 end;
 
+procedure TdfInteger.SerializeToJSON(const aJSON: TJSONBaseObject);
+begin
+  if Enabled then
+    if Assigned(FDef.OnGetText) then EditValueToJSON(aJSON)
+    else NativeValueToJSON(aJSON);
+end;
 
 { Mapped Integer }
 
@@ -3020,6 +3069,11 @@ begin
     SetNativeValues(aPath, not ((aValue = '0') or (aValue = '')));
 end;
 
+procedure TdfFlags.SerializeToJSON(const aJSON: TJSONBaseObject);
+begin
+  if Enabled then EditValueToJSON(aJSON);
+end;
+
 
 { Enum }
 
@@ -3061,6 +3115,10 @@ begin
   inherited SetElementEditValue(aElement, aDataStart, aDataEnd, s);
 end;
 
+procedure TdfEnum.SerializeToJSON(const aJSON: TJSONBaseObject);
+begin
+  if Enabled then EditValueToJSON(aJSON);
+end;
 
 { Float }
 
@@ -3197,6 +3255,13 @@ begin
   end;
   Value := F;
   SetElementNativeValue(aElement, aDataStart, aDataEnd, Value);
+end;
+
+procedure TdfFloat.SerializeToJSON(const aJSON: TJSONBaseObject);
+begin
+  if Enabled then
+    if Assigned(FDef.OnGetText) then EditValueToJSON(aJSON)
+    else NativeValueToJSON(aJSON);
 end;
 
 

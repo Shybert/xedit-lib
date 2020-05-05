@@ -137,6 +137,8 @@ function GetNifEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordB
 
 function IsNifHeader(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 function IsNifFooter(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+
+function NifElementToJson(_id: Cardinal; path: PWideChar; len: Pinteger): WordBool; cdecl;
 {$endregion}
 
 implementation
@@ -1807,6 +1809,22 @@ begin
   try
     element := ResolveObjects(_id) as TdfElement;
     bool^ := NativeIsNifFooter(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NifElementToJson(_id: Cardinal; path: PWideChar; len: Pinteger): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NativeGetNifElement(_id, path);
+    if NifElementNotFound(element, path) then exit;
+    resultStr := element.ToJSON(true);
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

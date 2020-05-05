@@ -1396,9 +1396,9 @@ begin
       Result := jdtObject;
     varOleStr, varString, varUString:
       Result := jdtString;
-    varSmallInt, varInteger, varShortInt, varByte, varWord, varLongWord:
+    varSmallInt, varInteger, varShortInt, varByte, varWord:
       Result := jdtInt;
-    varInt64:
+    varInt64, varLongWord:
       Result := jdtLong;
     varUInt64:
       Result := jdtULong;
