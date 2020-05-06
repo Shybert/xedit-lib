@@ -64,8 +64,8 @@ function NativeIsNifFooter(const element: TdfElement): Boolean;
 function GetNifMatrixSize(const element: TdfElement): Integer;
 function NativeGetNifMatrix(const element: TdfElement): String;
 procedure NativeSetNifMatrix(const element: TdfElement; const matrixJSON: String);
-function GetMergedElementNativeValues(const element: TdfMerge): String;
-procedure SetMergedElementNativeValues(const element: TdfMerge; const json: String);
+function MergedElementValuesToJSON(const element: TdfElement): String;
+procedure MergedElementValuesFromJSON(const element: TdfElement; const json: String);
 {$endregion}
 
 {$region 'API functions'}
@@ -666,37 +666,31 @@ begin
   end;
 end;
 
-function GetMergedElementNativeValues(const element: TdfMerge): String;
+function MergedElementValuesToJSON(const element: TdfElement): String;
 var
   obj: TJSONObject;
   i: Integer;
 begin
-  obj := TJSONObject.Create;
-  try
-    with TdfMergeDef(element.Def) do
-    for i := Low(Defs) to High(Defs) do
-      obj.D[Defs[i].Name] := element.NativeValues[Defs[i].Name];
-    Result := obj.ToString;
-  finally
-    obj.Free;
-  end;
+ obj := TJSONObject.Create;
+ try
+   with element.Def do
+     for i := Low(Defs) to High(Defs) do
+       obj.D[Defs[i].Name] := element.NativeValues[Defs[i].Name];
+   Result := obj.ToString;
+ finally
+   obj.Free;
+ end;
 end;
 
-procedure SetMergedElementNativeValues(const element: TdfMerge; const json: String);
+procedure MergedElementValuesFromJSON(const element: TdfElement; const json: String);
 var
   obj: TJSONObject;
   i: Integer;
 begin
   obj := TJSONObject.Create(json);
   try
-    with TdfMergeDef(element.Def) do
-    for i := Low(Defs) to High(Defs) do
-      if obj.HasKey(Defs[i].Name) then begin
-        if not (obj[Defs[i].Name].JSONValueType in [jtDouble, jtInt]) then
-          raise Exception.Create('The value of property "' + Defs[i].Name + '" is not a number.');
-
-        element.NativeValues[Defs[i].Name] := obj[Defs[i].Name].AsVariant;
-      end;
+    for i := 0 to Pred(obj.Count) do
+      element.NativeValues[obj.Keys[i]] := obj[obj.Keys[i]].AsVariant;
   finally
     obj.Free;
   end;
@@ -1405,7 +1399,7 @@ begin
     if not IsVector(element) then
       raise Exception.Create('Element is not a vector.');
 
-    resultStr := GetMergedElementNativeValues(element as TdfMerge);
+    resultStr := MergedElementValuesToJSON(element);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -1423,7 +1417,8 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not IsVector(element) then
       raise Exception.Create('Element is not a vector.');
-    SetMergedElementNativeValues(element as TdfMerge, coords);
+
+    MergedElementValuesFromJSON(element, coords);
     Result := True
   except
     on x: Exception do ExceptionHandler(x);
@@ -1481,7 +1476,7 @@ begin
     if not IsQuaternion(element) then
       raise Exception.Create('Element is not a quaternion.');
 
-    resultStr := GetMergedElementNativeValues(element as TdfMerge);
+    resultStr := MergedElementValuesToJSON(element);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -1499,7 +1494,8 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not IsQuaternion(element) then
       raise Exception.Create('Element is not a quaternion.');
-    SetMergedElementNativeValues(element as TdfMerge, coords);
+
+    MergedElementValuesFromJSON(element, coords);
     Result := True
   except
     on x: Exception do ExceptionHandler(x);
@@ -1554,7 +1550,7 @@ begin
     if not IsTexCoords(element) then
       raise Exception.Create('Element is not texture coordinates.');
 
-    resultStr := GetMergedElementNativeValues(element as TdfMerge);
+    resultStr := MergedElementValuesToJSON(element);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -1572,7 +1568,8 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not IsTexCoords(element) then
       raise Exception.Create('Element is not texture coordinates.');
-    SetMergedElementNativeValues(element as TdfMerge, coords);
+
+    MergedElementValuesFromJSON(element, coords);
     Result := True
   except
     on x: Exception do ExceptionHandler(x);
@@ -1590,7 +1587,7 @@ begin
     if not IsTriangle(element) then
       raise Exception.Create('Element is not a triangle.');
 
-    resultStr := GetMergedElementNativeValues(element as TdfMerge);
+    resultStr := MergedElementValuesToJSON(element);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -1608,7 +1605,8 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not IsTriangle(element) then
       raise Exception.Create('Element is not a triangle.');
-    SetMergedElementNativeValues(element as TdfMerge, vertexIndices);
+
+    MergedElementValuesFromJSON(element, vertexIndices);
     Result := True
   except
     on x: Exception do ExceptionHandler(x);

@@ -1910,8 +1910,8 @@ begin
 
           It('Should fail if the JSON values are invalid', procedure
             begin
-              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":True,"Y":-3.25,"Z":-29.78125,"W":1.25}'));
-              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":[],"Y":-3.25,"Z":-29.78125,"W":1.25}'));
+              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":"s","Y":-3.25,"Z":-29.78125,"W":1.25}'));
+              ExpectFailure(SetNifVector(nif, 'bhkCompressedMeshShapeData\Bounds Min', '{"X":35,"Y":-3.25,"Z":[],"W":1.25}'));
             end);
 
           It('Should fail if the JSON is invalid', procedure
@@ -1970,8 +1970,8 @@ begin
 
           It('Should fail if the JSON values are invalid', procedure
             begin
-              ExpectFailure(SetNifTriangle(nif, 'BSTriShape\Triangles\[3]', '{"V1":true,"V2":19,"V3":7}'));
-              ExpectFailure(SetNifTriangle(nif, 'BSTriShape\Triangles\[3]', '{"V1":[],"V2":19,"V3":7}'));
+              ExpectFailure(SetNifTriangle(nif, 'BSTriShape\Triangles\[3]', '{"V1":"s","V2":19,"V3":7}'));
+              ExpectFailure(SetNifTriangle(nif, 'BSTriShape\Triangles\[3]', '{"V1":2,"V2":19,"V3":[]}'));
             end);
 
           It('Should fail if the JSON is invalid', procedure
@@ -2143,8 +2143,8 @@ begin
 
           It('Should fail if the JSON values are invalid', procedure
             begin
-              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":true,"Y":1,"Z":1,"W":1}'));
-              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":[],"Y":1,"Z":1,"W":1}'));
+              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":"s","Y":1,"Z":1,"W":1}'));
+              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":1,"Y":1,"Z":[],"W":1}'));
             end);
 
           It('Should fail if the JSON is invalid', procedure
@@ -2202,8 +2202,8 @@ begin
 
           It('Should fail if the JSON values are invalid', procedure
             begin
-              ExpectFailure(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"U":true,"V":1}'));
-              ExpectFailure(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"U":[],"V":1}'));
+              ExpectFailure(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"U":"s","V":1}'));
+              ExpectFailure(SetNifTexCoords(nif, 'BSTriShape\Vertex Data\[0]\UV', '{"U":1,"V":[]}'));
             end);
 
           It('Should fail if the JSON is invalid', procedure
