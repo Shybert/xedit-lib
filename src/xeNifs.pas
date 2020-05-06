@@ -118,9 +118,8 @@ function GetNifFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordB
 function SetNifFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
 function GetNifVector(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifVector(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
-function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
-function GetNativeNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
-function SetNativeNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
+function GetNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function SetNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifMatrix(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifMatrix(_id: Cardinal; path, matrix: PWideChar): WordBool; cdecl;
 function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -1425,47 +1424,7 @@ begin
   end;
 end;
 
-function GetNifQuaternion(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
-var
-  element: TdfElement;
-  obj: TJSONObject;
-  values: TStringDynArray;
-begin
-  Result := False;
-  try
-    element := NativeGetNifElement(_id, path);
-    if NifElementNotFound(element, path) then exit;
-    if not IsQuaternion(element) then
-      raise Exception.Create('Element is not a quaternion.');
-
-    wbRotationEuler := eulerRotation;
-    values := SplitString(element.EditValue, ' ');
-    obj := TJSONObject.Create;
-    try
-      if eulerRotation then begin
-        obj.D['Y'] := StrToFloat(values[0]);
-        obj.D['P'] := StrToFloat(values[1]);
-        obj.D['R'] := StrToFloat(values[2]);
-      end
-      else begin
-        obj.D['A'] := StrToFloat(values[0]);
-        obj.D['X'] := StrToFloat(values[1]);
-        obj.D['Y'] := StrToFloat(values[2]);
-        obj.D['Z'] := StrToFloat(values[3]);
-      end;
-
-      resultStr := obj.ToString;
-      len^ := Length(resultStr);
-      Result := True;
-    finally
-      obj.Free;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetNativeNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+function GetNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   element: TdfElement;
 begin
@@ -1484,7 +1443,7 @@ begin
   end;
 end;
 
-function SetNativeNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
+function SetNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 var
   element: TdfElement;
 begin

@@ -1987,33 +1987,6 @@ begin
             end);
         end);
 
-      Describe('GetNifQuaternion', procedure
-        begin
-          BeforeAll(procedure
-            begin
-              ExpectSuccess(LoadNif('meshes\animobjects\animobjectbucket.nif', @h));
-            end);
-
-          It('Should resolve quaternions as an Euler rotation when eulerRotation is true', procedure
-            begin
-              ExpectSuccess(GetNifQuaternion(h, 'bhkRigidBody\Rotation', true, @len));
-              ExpectEqual(grs(len), '{"Y":94.636955,"P":29.171878,"R":-127.683766}');
-            end);
-
-          It('Should resolve quaternions as an angle and axis when eulerRotation is false', procedure
-            begin
-              ExpectSuccess(GetNifQuaternion(h, 'bhkRigidBody\Rotation', false, @len));
-              ExpectEqual(grs(len), '{"A":125.818765,"X":0.180168,"Y":0.801807,"Z":-0.569776}');
-            end);
-
-          It('Should fail if the element isn''t a quaternion', procedure
-            begin
-              ExpectFailure(GetNifQuaternion(nif, '', true, @len));
-              ExpectFailure(GetNifQuaternion(nif, 'bhkMoppBvTreeShape\Origin', true, @len));
-              ExpectFailure(GetNifQuaternion(nif, 'BSLightingShaderProperty\UV Offset', true, @len));
-            end);
-        end);
-
       Describe('GetNifMatrix', procedure
         begin
           It('Should resolve matrices', procedure
@@ -2093,69 +2066,59 @@ begin
             end);
         end);        
 
-      Describe('GetNativeNifQuaternion', procedure
+      Describe('GetNifQuaternion', procedure
         begin
-          BeforeAll(procedure
-            begin
-              ExpectSuccess(LoadNif('meshes\animobjects\animobjectbucket.nif', @h));
-            end);
-
           It('Should resolve quaternion coordinates', procedure
             begin
-              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
-              ExpectEqual(grs(len), '{"X":0.160401180386543,"Y":0.713838517665863,"Z":-0.507264733314514,"W":0.455399125814438}');
+              ExpectSuccess(GetNifQuaternion(xt3, 'bhkRigidBody\Rotation', @len));
+              ExpectEqual(grs(len), '{"X":0,"Y":-23,"Z":-42.625,"W":0.125}');
             end);
 
           It('Should fail if the element isn''t a quaternion', procedure
             begin
-              ExpectFailure(GetNativeNifQuaternion(nif, '', @len));
-              ExpectFailure(GetNativeNifQuaternion(rootNode, '', @len));
+              ExpectFailure(GetNifQuaternion(nif, '', @len));
+              ExpectFailure(GetNifQuaternion(rootNode, '', @len));
             end);
         end);
 
-      Describe('SetNativeNifQuaternion', procedure
+      Describe('SetNifQuaternion', procedure
         begin
-          BeforeAll(procedure
-            begin
-              ExpectSuccess(LoadNif('meshes\animobjects\animobjectbucket.nif', @h));
-            end);
-
           It('Should be able to set quaternion coordinates', procedure
             begin
-              ExpectSuccess(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":-2,"Y":2.125,"Z":-44.625,"W":39}'));
-              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
+              ExpectSuccess(SetNifQuaternion(xt3, 'bhkRigidBody\Rotation', '{"X":-2,"Y":2.125,"Z":-44.625,"W":39}'));
+              ExpectSuccess(GetNifQuaternion(xt3, 'bhkRigidBody\Rotation', @len));
               ExpectEqual(grs(len), '{"X":-2,"Y":2.125,"Z":-44.625,"W":39}');
             end);
 
           It('Should support coordinates in any order', procedure
             begin
-              ExpectSuccess(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"Z":0.625,"Y":1.125,"X":0,"W":-25}'));
-              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
+              ExpectSuccess(SetNifQuaternion(xt3, 'bhkRigidBody\Rotation', '{"Z":0.625,"Y":1.125,"X":0,"W":-25}'));
+              ExpectSuccess(GetNifQuaternion(xt3, 'bhkRigidBody\Rotation', @len));
               ExpectEqual(grs(len), '{"X":0,"Y":1.125,"Z":0.625,"W":-25}');
             end);
 
           It('Should not require setting all coordinates at the same time', procedure
             begin
-              ExpectSuccess(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"Z":-23.125}'));
-              ExpectSuccess(GetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', @len));
+              ExpectSuccess(SetNifQuaternion(xt3, 'bhkRigidBody\Rotation', '{"Z":-23.125}'));
+              ExpectSuccess(GetNifQuaternion(xt3, 'bhkRigidBody\Rotation', @len));
               ExpectEqual(grs(len), '{"X":0,"Y":1.125,"Z":-23.125,"W":-25}');
             end);
 
           It('Should fail if the JSON values are invalid', procedure
             begin
-              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":"s","Y":1,"Z":1,"W":1}'));
-              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', '{"X":1,"Y":1,"Z":[],"W":1}'));
+              ExpectFailure(SetNifQuaternion(xt3, 'bhkRigidBody\Rotation', '{"X":"s","Y":1,"Z":1,"W":1}'));
+              ExpectFailure(SetNifQuaternion(xt3, 'bhkRigidBody\Rotation', '{"X":1,"Y":1,"Z":[],"W":1}'));
             end);
 
           It('Should fail if the JSON is invalid', procedure
             begin
-              ExpectFailure(SetNativeNifQuaternion(h, 'bhkRigidBody\Rotation', 'Invalid'));
+              ExpectFailure(SetNifQuaternion(xt3, 'bhkRigidBody\Rotation', 'Invalid'));
             end);
 
           It('Should fail if the element isn''t a quaternion', procedure
             begin
-              ExpectFailure(SetNativeNifQuaternion(nif, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
-              ExpectFailure(SetNativeNifQuaternion(rootNode, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
+              ExpectFailure(SetNifQuaternion(nif, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
+              ExpectFailure(SetNifQuaternion(rootNode, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
             end);
         end);
 
