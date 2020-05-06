@@ -952,7 +952,6 @@ begin
   end;
 end;
 
-
 function NifElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   element: TdfElement;

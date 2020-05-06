@@ -874,7 +874,7 @@ begin
                 TestRemoveNifBlock(h, 'BSXFlags');
               end);
 
-            It('Should clear links referencing the removed block', procedure
+            It('Should clear references to the removed block', procedure
               begin
                 TestRemoveNifBlock(h, 'bhkCompressedMeshShapeData');
                 ExpectFailure(GetNifElement(h, 'bhkCompressedMeshShape\@Data', @h2));
@@ -1106,7 +1106,7 @@ begin
             end);
         end);
 
-      Describe('ElementCount', procedure
+      Describe('NifElementCount', procedure
         begin
           It('Should return the number of blocks in a Nif file', procedure
             begin
