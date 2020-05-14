@@ -355,6 +355,11 @@ begin
   Expect(obj.HasKey(key), key + ' should exist');
 end;
 
+procedure ExpectApproxEqual(actual: Double; expected: Double);
+begin
+  Expect(abs(actual - expected) < 1e-2, Format('Expected "%n" to approximately equal "%n"', [actual, expected]));
+end;
+
 procedure CopyNifs(filenames: TStringArray);
 var
   dataPath, programPath, oldPath, newPath: String;
@@ -2118,6 +2123,53 @@ begin
               ExpectFailure(SetNifQuaternion(nif, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
               ExpectFailure(SetNifQuaternion(rootBlock, '', '{"X":1,"Y":1,"Z":1,"W":1}'));
             end);
+        end);
+
+      Describe('GetNifRotation', procedure
+        begin
+          AfterAll(procedure
+            begin
+              obj.Free;
+            end);
+
+          It('Should resolve rotations as an euler rotation when eulerRotation is true', procedure
+            begin
+              ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', true, @len));
+              obj := TJSONObject.Create(grs(len));
+              ExpectApproxEqual(obj.D['Y'], -115);
+              ExpectApproxEqual(obj.D['P'], 6.34);
+              ExpectApproxEqual(obj.D['R'], 7.16);
+
+              ExpectSuccess(GetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', true, @len));
+              obj := TJSONObject.Create(grs(len));
+              ExpectApproxEqual(obj.D['Y'], -45.23);
+              ExpectApproxEqual(obj.D['P'], -32.55);
+              ExpectApproxEqual(obj.D['R'], -1.12);              
+            end);
+
+          It('Should resolve rotations as an angle and an axis when eulerRotation is false', procedure
+            begin
+              ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', false, @len));
+              obj := TJSONObject.Create(grs(len));
+              ExpectApproxEqual(obj.D['angle'], 114.86);
+              ExpectApproxEqual(obj.D['X'], -0.99511);
+              ExpectApproxEqual(obj.D['Y'], 0.09758);
+              ExpectApproxEqual(obj.D['Z'], -0.01548);
+
+              ExpectSuccess(GetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', false, @len));
+              obj := TJSONObject.Create(grs(len));
+              ExpectApproxEqual(obj.D['angle'], 54.97);
+              ExpectApproxEqual(obj.D['X'], -0.79429);
+              ExpectApproxEqual(obj.D['Y'], -0.56833);
+              ExpectApproxEqual(obj.D['Z'], 0.21473);             
+            end);
+
+          It('Should fail if the element isn''t a rotation', procedure 
+            begin
+              ExpectFailure(GetNifRotation(nif, '', true, @len));
+              ExpectFailure(GetNifRotation(vector, '', true, @len));
+              ExpectFailure(GetNifRotation(xt1, 'NiTexturingProperty\Bump Map Matrix', true, @len));
+            end);            
         end);
 
       Describe('GetNifTexCoords', procedure
