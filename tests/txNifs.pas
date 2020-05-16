@@ -2132,7 +2132,7 @@ begin
               obj.Free;
             end);
 
-          It('Should resolve rotations as an euler rotation when eulerRotation is true', procedure
+          It('Should resolve rotations as euler YPR when eulerYPR is true', procedure
             begin
               ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', true, @len));
               obj := TJSONObject.Create(grs(len));
@@ -2147,7 +2147,7 @@ begin
               ExpectApproxEqual(obj.D['R'], -1.12);              
             end);
 
-          It('Should resolve rotations as an angle and an axis when eulerRotation is false', procedure
+          It('Should resolve rotations as an angle and an axis when eulerYPR is false', procedure
             begin
               ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', false, @len));
               obj := TJSONObject.Create(grs(len));
@@ -2164,7 +2164,7 @@ begin
               ExpectApproxEqual(obj.D['Z'], 0.21473);             
             end);
 
-          It('Should fail if the element isn''t a rotation', procedure 
+          It('Should fail if the element doesn''t represent a rotation', procedure 
             begin
               ExpectFailure(GetNifRotation(nif, '', true, @len));
               ExpectFailure(GetNifRotation(vector, '', true, @len));

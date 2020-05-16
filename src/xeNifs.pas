@@ -68,10 +68,10 @@ procedure NativeSetNifMatrix(const element: TdfElement; const matrixJSON: String
 function MergedElementValuesToJSON(const element: TdfElement): String;
 procedure MergedElementValuesFromJSON(const element: TdfElement; const json: String);
 
-function EulerRotationToJSON(const y, p, r: Extended): String;
+function EulerYPRToJSON(const y, p, r: Extended): String;
 function AxisAngleToJSON(const angle, x, y, z: Extended): String;
-function GetQuaternionRotation(const element: TdfElement; const eulerRotation: WordBool): String;
-function GetMatrixRotation(const element: TdfElement; const eulerRotation: WordBool): String;
+function GetQuaternionRotation(const element: TdfElement; const eulerYPR: WordBool): String;
+function GetMatrixRotation(const element: TdfElement; const eulerYPR: WordBool): String;
 {$endregion}
 
 {$region 'API functions'}
@@ -128,7 +128,7 @@ function GetNifQuaternion(_id: Cardinal; path: PWideChar; len: PInteger): WordBo
 function SetNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifMatrix(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifMatrix(_id: Cardinal; path, matrix: PWideChar): WordBool; cdecl;
-function GetNifRotation(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
+function GetNifRotation(_id: Cardinal; path: PWideChar; eulerYPR: WordBool; len: PInteger): WordBool; cdecl;
 function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifTexCoords(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -707,7 +707,7 @@ begin
   end;
 end;
 
-function EulerRotationToJSON(const y, p, r: Extended): String;
+function EulerYPRToJSON(const y, p, r: Extended): String;
 var
   obj: TJSONObject;
 begin
@@ -738,7 +738,7 @@ begin
   end;
 end;
 
-function GetQuaternionRotation(const element: TdfElement; const eulerRotation: WordBool): String;
+function GetQuaternionRotation(const element: TdfElement; const eulerYPR: WordBool): String;
 var
   quaternion: TQuaternion;
   angle, x, y, z: Extended;
@@ -748,9 +748,9 @@ begin
   quaternion.z := element.NativeValues['Z'];
   quaternion.w := element.NativeValues['W'];
 
-  if (eulerRotation) then begin
+  if (eulerYPR) then begin
     QuaternionToEuler(quaternion, x, y, z);
-    Result := EulerRotationToJSON(x, y, z);
+    Result := EulerYPRToJSON(x, y, z);
   end
   else begin
     QuaternionToAxisAngle(quaternion, angle, x, y, z);
@@ -758,7 +758,7 @@ begin
   end;
 end;
 
-function GetMatrixRotation(const element: TdfElement; const eulerRotation: WordBool): String;
+function GetMatrixRotation(const element: TdfElement; const eulerYPR: WordBool): String;
 var
   matrix: TMatrix33;
   i, j: Integer;
@@ -768,9 +768,9 @@ begin
     for j := 0 to 2 do
       matrix[j, i] := element.NativeValues['m' + IntToStr(i+1) + IntToStr(j+1)];
 
-  if (eulerRotation) then begin
+  if (eulerYPR) then begin
     M33ToEuler(matrix, x, y, z);
-    Result := EulerRotationToJSON(x, y, z);
+    Result := EulerYPRToJSON(x, y, z);
   end
   else begin
     M33ToAxisAngle(matrix, angle, x, y, z);
@@ -1580,7 +1580,7 @@ begin
   end;
 end;
 
-function GetNifRotation(_id: Cardinal; path: PWideChar; eulerRotation: WordBool; len: PInteger): WordBool; cdecl;
+function GetNifRotation(_id: Cardinal; path: PWideChar; eulerYPR: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: TdfElement;
 begin
@@ -1590,9 +1590,9 @@ begin
     if NifElementNotFound(element, path) then exit;
 
     if IsQuaternion(element) then
-      resultStr := GetQuaternionRotation(element, eulerRotation)
+      resultStr := GetQuaternionRotation(element, eulerYPR)
     else if IsMatrix33(element) then
-      resultStr := GetMatrixRotation(element, eulerRotation)
+      resultStr := GetMatrixRotation(element, eulerYPR)
     else
       raise Exception.Create('Element is not a quaternion or a 3x3 matrix.');
 
