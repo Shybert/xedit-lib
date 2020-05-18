@@ -10,6 +10,7 @@ uses
   Windows,
   SysUtils,
   Classes,
+  Variants,
   Argo,
   Mahogany,
   txMeta,
@@ -19,6 +20,16 @@ uses
 {$IFNDEF USE_DLL}
   xeConfiguration, xeNifs, xeMeta;
 {$ENDIF}
+
+procedure ExpectExists(obj: TJSONObject; key: string);
+begin
+  Expect(obj.HasKey(key), key + ' should exist');
+end;
+
+procedure ExpectApproxEqual(actual: Variant; expected: Variant);
+begin
+  Expect(abs(actual - expected) < 1e-2, Format('Expected "%s" to approximately equal "%s"', [VarToStr(actual), VarToStr(expected)]));
+end;
 
 procedure TestLoadNif(filePath: string);
 var
@@ -316,6 +327,35 @@ begin
   ExpectEqual(grs(len), string(matrix));
 end;
 
+procedure TestRotationEquality(rotation: String; expectedY, expectedP, expectedR: Double); overload;
+var
+  obj: TJSONObject;
+begin
+  obj := TJSONObject.Create(rotation);
+  try
+    ExpectApproxEqual(obj['Y'].AsVariant, expectedY);
+    ExpectApproxEqual(obj['P'].AsVariant, expectedP);
+    ExpectApproxEqual(obj['R'].AsVariant, expectedR);
+  finally
+    obj.Free;
+  end;
+end;
+
+procedure TestRotationEquality(rotation: String; expectedAngle, expectedX, expectedY, expectedZ: Double); overload;
+var
+  obj: TJSONObject;
+begin
+  obj := TJSONObject.Create(rotation);
+  try
+    ExpectApproxEqual(obj['angle'].AsVariant, expectedAngle);
+    ExpectApproxEqual(obj['X'].AsVariant, expectedX);
+    ExpectApproxEqual(obj['Y'].AsVariant, expectedY);
+    ExpectApproxEqual(obj['Z'].AsVariant, expectedZ);
+  finally
+    obj.Free;
+  end;
+end;
+
 procedure TestGetNifFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
 var
   b: WordBool;
@@ -348,16 +388,6 @@ var
 begin
   ExpectSuccess(GetNifEnumOptions(h, path, @len));
   ExpectEqual(grs(len), expectedOptions);
-end;
-
-procedure ExpectExists(obj: TJSONObject; key: string);
-begin
-  Expect(obj.HasKey(key), key + ' should exist');
-end;
-
-procedure ExpectApproxEqual(actual: Double; expected: Double);
-begin
-  Expect(abs(actual - expected) < 1e-2, Format('Expected "%n" to approximately equal "%n"', [actual, expected]));
 end;
 
 procedure CopyNifs(filenames: TStringArray);
@@ -2135,33 +2165,17 @@ begin
           It('Should resolve rotations as euler YPR when eulerYPR is true', procedure
             begin
               ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', true, @len));
-              obj := TJSONObject.Create(grs(len));
-              ExpectApproxEqual(obj.D['Y'], -115);
-              ExpectApproxEqual(obj.D['P'], 6.34);
-              ExpectApproxEqual(obj.D['R'], 7.16);
-
+              TestRotationEquality(grs(len), -115, 6.34, 7.16);
               ExpectSuccess(GetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', true, @len));
-              obj := TJSONObject.Create(grs(len));
-              ExpectApproxEqual(obj.D['Y'], -45.23);
-              ExpectApproxEqual(obj.D['P'], -32.55);
-              ExpectApproxEqual(obj.D['R'], -1.12);              
+              TestRotationEquality(grs(len), -45.23, -32.55, -1.12);
             end);
 
           It('Should resolve rotations as an angle and an axis when eulerYPR is false', procedure
             begin
               ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', false, @len));
-              obj := TJSONObject.Create(grs(len));
-              ExpectApproxEqual(obj.D['angle'], 114.86);
-              ExpectApproxEqual(obj.D['X'], -0.99511);
-              ExpectApproxEqual(obj.D['Y'], 0.09758);
-              ExpectApproxEqual(obj.D['Z'], -0.01548);
-
+              TestRotationEquality(grs(len), 114.86, -0.99511, 0.09758, -0.01548);
               ExpectSuccess(GetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', false, @len));
-              obj := TJSONObject.Create(grs(len));
-              ExpectApproxEqual(obj.D['angle'], 54.97);
-              ExpectApproxEqual(obj.D['X'], -0.79429);
-              ExpectApproxEqual(obj.D['Y'], -0.56833);
-              ExpectApproxEqual(obj.D['Z'], 0.21473);             
+              TestRotationEquality(grs(len), 54.97, -0.79429, -0.56833, 0.21473);
             end);
 
           It('Should fail if the element doesn''t represent a rotation', procedure 
