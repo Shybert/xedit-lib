@@ -356,6 +356,43 @@ begin
   end;
 end;
 
+procedure TestSetNifRotation(h: Cardinal; path: PWideChar; y, p, r: Double); overload;
+var
+  obj: TJSONObject;
+  len: Integer;
+begin
+  obj := TJSONObject.Create();
+  try
+    obj.D['Y'] := y;
+    obj.D['P'] := p;
+    obj.D['R'] := r;
+    ExpectSuccess(SetNifRotation(h, path, PWideChar(obj.ToString)));
+    ExpectSuccess(GetNifRotation(h, path, true, @len));
+    TestRotationEquality(grs(len), y, p, r)
+  finally
+    obj.Free;
+  end;
+end;
+
+procedure TestSetNifRotation(h: Cardinal; path: PWideChar; angle, x, y, z: Double); overload;
+var
+  obj: TJSONObject;
+  len: Integer;
+begin
+  obj := TJSONObject.Create();
+  try
+    obj.D['angle'] := angle;
+    obj.D['X'] := x;
+    obj.D['Y'] := y;
+    obj.D['Z'] := z;
+    ExpectSuccess(SetNifRotation(h, path, PWideChar(obj.ToString)));
+    ExpectSuccess(GetNifRotation(h, path, false, @len));
+    TestRotationEquality(grs(len), angle, x, y, z)
+  finally
+    obj.Free;
+  end;
+end;
+
 procedure TestGetNifFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
 var
   b: WordBool;
@@ -2185,6 +2222,72 @@ begin
               ExpectFailure(GetNifRotation(xt1, 'NiTexturingProperty\Bump Map Matrix', true, @len));
             end);            
         end);
+
+      Describe('SetNifRotation', procedure
+        begin
+          AfterAll(procedure
+            begin
+              obj.Free;
+            end);
+
+          It('Should let you set rotations with euler YPR', procedure
+            begin
+              TestSetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', -42.12, 15, 1.2);
+              TestSetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', 0.05, 23, -3.125);                       
+            end);
+
+          It('Should let you set rotations with an angle and an axis', procedure
+            begin
+              TestSetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', 15.3, 0.505, 0.808, -0.303);
+              TestSetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', 26.7, -0.426, 0.640, -0.640);                   
+            end);
+
+          It('Should not matter what a rotation''s internal representation is', procedure
+            begin
+              ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', true, @len));
+              obj := TJSONObject.Create(grs(len));
+              TestSetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', obj.D['Y'], obj.D['P'], obj.D['R']);
+
+              ExpectSuccess(GetNifRotation(xt1, 'NiKeyframeData\Quaternion Keys\[0]\Value', true, @len));
+              obj := TJSONObject.Create(grs(len));
+              TestSetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', obj.D['Y'], obj.D['P'], obj.D['R']);
+            end);                     
+
+          It('Should support properties in any order', procedure
+            begin
+              ExpectSuccess(SetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', '{"P":5.8,"R":1.2,"Y":-45}'));
+              ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', true, @len));
+              TestRotationEquality(grs(len), -45, 5.8, 1.2);
+
+              ExpectSuccess(SetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', '{"X":0.802,"angle":15.3,"Z":-0.267,"Y":0.535}'));
+              ExpectSuccess(GetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', false, @len));
+              TestRotationEquality(grs(len), 15.3, 0.802, 0.535, -0.267);                     
+            end);            
+
+          It('Should fail if properties are missing', procedure
+            begin
+              ExpectFailure(SetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', '{"Y":1}'));
+              ExpectFailure(SetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', '{"angle":1,"X":1}'));
+            end);              
+
+          It('Should fail if the JSON values are invalid', procedure
+            begin
+              ExpectFailure(SetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', '{"Y":"s","P":1,"R":1}'));
+              ExpectFailure(SetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', '{"Y":1,"P":1,"R":[]}'));
+            end);            
+
+          It('Should fail if the JSON is invalid', procedure
+            begin
+              ExpectFailure(SetNifRotation(xt1, 'BSBlastNode\Transform\Rotation', 'Invalid'));
+            end);            
+
+          It('Should fail if the element doesn''t represent a rotation', procedure 
+            begin
+              ExpectFailure(SetNifRotation(nif, '', '{"Y":1,"P":1,"R":1}'));
+              ExpectFailure(SetNifRotation(vector, '', '{"Y":1,"P":1,"R":1}'));
+              ExpectFailure(SetNifRotation(xt1, 'NiTexturingProperty\Bump Map Matrix', '{"Y":1,"P":1,"R":1}'));
+            end);            
+        end);        
 
       Describe('GetNifTexCoords', procedure
         begin

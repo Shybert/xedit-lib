@@ -71,7 +71,9 @@ procedure MergedElementValuesFromJSON(const element: TdfElement; const json: Str
 function EulerYPRToJSON(const y, p, r: Extended): String;
 function AxisAngleToJSON(const angle, x, y, z: Extended): String;
 function GetQuaternionRotation(const element: TdfElement; const eulerYPR: WordBool): String;
+procedure SetQuaternionRotation(const element: TdfElement; const rotation: String);
 function GetMatrixRotation(const element: TdfElement; const eulerYPR: WordBool): String;
+procedure SetMatrixRotation(const element: TdfElement; const rotation: String);
 {$endregion}
 
 {$region 'API functions'}
@@ -129,6 +131,7 @@ function SetNifQuaternion(_id: Cardinal; path, coords: PWideChar): WordBool; cde
 function GetNifMatrix(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifMatrix(_id: Cardinal; path, matrix: PWideChar): WordBool; cdecl;
 function GetNifRotation(_id: Cardinal; path: PWideChar; eulerYPR: WordBool; len: PInteger): WordBool; cdecl;
+function SetNifRotation(_id: Cardinal; path: PWideChar; rotation: PWideChar): WordBool; cdecl;
 function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function SetNifTexCoords(_id: Cardinal; path, coords: PWideChar): WordBool; cdecl;
 function GetNifTriangle(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -758,6 +761,40 @@ begin
   end;
 end;
 
+procedure SetQuaternionRotation(const element: TdfElement; const rotation: String);
+var
+  obj: TJSONObject;
+  quaternion: TQuaternion;
+begin
+  obj := TJSONObject.Create(rotation);
+  try
+    if obj.Count = 3 then
+      EulerToQuaternion(
+        DegToRad(obj['Y'].AsVariant),
+        DegToRad(obj['P'].AsVariant),
+        DegToRad(obj['R'].AsVariant),
+        quaternion
+      )
+    else if obj.Count = 4 then
+      AxisAngleToQuaternion(
+        DegToRad(obj['angle'].AsVariant),
+        obj['X'].AsVariant,
+        obj['Y'].AsVariant,
+        obj['Z'].AsVariant,
+        quaternion
+      )
+    else
+      raise Exception.Create('Rotation has an invalid number of properties');
+
+    element.NativeValues['X'] := quaternion.x;
+    element.NativeValues['Y'] := quaternion.y;
+    element.NativeValues['Z'] := quaternion.z;
+    element.NativeValues['W'] := quaternion.w;    
+  finally
+    obj.Free;
+  end;
+end;
+
 function GetMatrixRotation(const element: TdfElement; const eulerYPR: WordBool): String;
 var
   matrix: TMatrix33;
@@ -775,6 +812,40 @@ begin
   else begin
     M33ToAxisAngle(matrix, angle, x, y, z);
     Result := AxisAngleToJSON(angle, x, y, z);
+  end;
+end;
+
+procedure SetMatrixRotation(const element: TdfElement; const rotation: String);
+var
+  obj: TJSONObject;
+  matrix: TMatrix33;
+  i, j: Integer;
+begin
+  obj := TJSONObject.Create(rotation);
+  try
+    if obj.Count = 3 then
+      EulerToM33(
+        DegToRad(obj['Y'].AsVariant),
+        DegToRad(obj['P'].AsVariant),
+        DegToRad(obj['R'].AsVariant),
+        matrix
+      )
+    else if obj.Count = 4 then
+      AxisAngleToM33(
+        DegToRad(obj['angle'].AsVariant),
+        obj['X'].AsVariant,
+        obj['Y'].AsVariant,
+        obj['Z'].AsVariant,
+        matrix
+      )
+    else
+      raise Exception.Create('Rotation has an invalid number of properties');
+
+    for i := 0 to 2 do
+      for j := 0 to 2 do
+        element.NativeValues['m' + IntToStr(i+1) + IntToStr(j+1)] := matrix[j, i];
+  finally
+    obj.Free;
   end;
 end;
 {$endregion}
@@ -1601,6 +1672,27 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+function SetNifRotation(_id: Cardinal; path: PWideChar; rotation: PWideChar): WordBool; cdecl;
+var
+ element: TdfElement;
+begin
+ Result := False;
+ try
+   element := NativeGetNifElement(_id, path);
+   if NifElementNotFound(element, path) then exit;
+
+   if IsQuaternion(element) then
+     SetQuaternionRotation(element, rotation)
+   else if IsMatrix33(element) then
+     SetMatrixRotation(element, rotation)
+   else
+     raise Exception.Create('Element is not a quaternion or a 3x3 matrix.');
+   Result := True;
+ except
+   on x: Exception do ExceptionHandler(x);
+ end;
 end;
 
 function GetNifTexCoords(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
