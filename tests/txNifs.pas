@@ -86,7 +86,7 @@ begin
   ExpectEqual(len, expectedCount);
   a := gra(len);
   for i := Low(a) to High(a) do
-    ReleaseObjects(a[i]);
+    ReleaseNif(a[i]);
 end;
 
 procedure TestNifElementCount(h: Cardinal; expectedCount: Integer);

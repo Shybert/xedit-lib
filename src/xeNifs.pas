@@ -446,9 +446,9 @@ end;
 function NativeGetNifElement(_id: Cardinal; path: PWideChar): TdfElement;
 begin
   if string(path) = '' then
-    Result := ResolveObjects(_id) as TdfElement
+    Result := ResolveNif(_id)
   else
-    Result := ResolveElement(ResolveObjects(_id) as TdfElement, string(path));
+    Result := ResolveElement(ResolveNif(_id), string(path));
 end;
 
 function NifReferenceMatches(const ref: TwbNiRef; const value: String): Boolean;
@@ -855,7 +855,7 @@ function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    _res^ := StoreObjects(NativeLoadNif(string(filePath)));
+    _res^ := StoreNif(NativeLoadNif(string(filePath)));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -866,9 +866,9 @@ function FreeNif(_id: Cardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    if not (ResolveObjects(_id) is TwbNifFile) then
+    if not (ResolveNif(_id) is TwbNifFile) then
       raise Exception.Create('Interface must be a nif file.');
-    Result := ReleaseObjects(_id);
+    Result := ReleaseNif(_id);
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -878,9 +878,9 @@ function SaveNif(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
 begin
   Result := False;
   try
-    if not (ResolveObjects(_id) is TwbNifFile) then
+    if not (ResolveNif(_id) is TwbNifFile) then
       raise Exception.Create('Interface must be a Nif file.');
-    NativeSaveNif(ResolveObjects(_id) as TwbNifFile, filePath);
+    NativeSaveNif(ResolveNif(_id) as TwbNifFile, filePath);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -891,7 +891,7 @@ function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal)
 begin
   Result := False;
   try
-    _res^ := StoreObjects(NativeCreateNif(string(filePath), ignoreExists));
+    _res^ := StoreNif(NativeCreateNif(string(filePath), ignoreExists));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -920,7 +920,7 @@ Result := False;
   try
     element := NativeGetNifElement(_id, path);
     if NifElementNotFound(element, path) then exit;
-    _res^ := StoreObjects(element);
+    _res^ := StoreNif(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -940,7 +940,7 @@ begin
       raise Exception.Create('Element is not a container.');
     SetLength(resultArray, element.Count);
     for i := 0 to Pred(element.Count) do
-      resultArray[i] := StoreObjects(element[i]);
+      resultArray[i] := StoreNif(element[i]);
     len^ := Length(resultArray);
     Result := True;
   except
@@ -958,11 +958,11 @@ begin
     if NifElementNotFound(element, path) then exit;
 
     if element is TwbNifFile then
-      _res^ := StoreObjects(TwbNifFile(element).AddBlock(blockType))
+      _res^ := StoreNif(TwbNifFile(element).AddBlock(blockType))
     else if element is TdfArray then
-      _res^ := StoreObjects(AddBlockFromArray(TdfArray(element), blockType))
+      _res^ := StoreNif(AddBlockFromArray(TdfArray(element), blockType))
     else if element is TwbNiRef then
-      _res^ := StoreObjects(AddBlockFromReference(TwbNiRef(element), blockType))
+      _res^ := StoreNif(AddBlockFromReference(TwbNiRef(element), blockType))
     else
       raise Exception.Create('Element must either be a nif file, an array, or a reference.');
 
@@ -1021,7 +1021,7 @@ begin
   try
     lst := TList.Create;
     try
-      NativeGetNifBlocks(ResolveObjects(_id) as TdfElement, String(search), lst);
+      NativeGetNifBlocks(ResolveNif(_id), String(search), lst);
       StoreObjectList(lst, len);
       Result := True;
     finally
@@ -1040,7 +1040,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if NifElementNotFound(element, '') then exit;
     if element is TwbNifFile then
       raise Exception.Create('Element cannot be a nif file.');
@@ -1077,7 +1077,7 @@ begin
     if not Assigned(linkedElement) then
       _res^ := 0
     else
-      _res^ := StoreObjects(linkedElement);
+      _res^ := StoreNif(linkedElement);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -1093,7 +1093,7 @@ begin
     element := NativeGetNifElement(_id, path);
     if not (element is TwbNiRef) then
       raise Exception.Create('Element cannot hold references.');
-    element2 := ResolveObjects(_id2) as TdfElement;
+    element2 := ResolveNif(_id2);
     if not (element2 is TwbNifBlock) then
       raise Exception.Create('Second interface is not a block.');
     if not TwbNifBlock(element2).IsNiObject(TwbNiRef(element).Template) then
@@ -1112,7 +1112,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if NifElementNotFound(element, '') then exit;
     count^ := element.Count;
     Result := True;
@@ -1127,9 +1127,9 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if NifElementNotFound(element, '') then exit;
-    element2 := ResolveObjects(_id2) as TdfElement;
+    element2 := ResolveNif(_id2);
     if NifElementNotFound(element2, '') then exit;
     bool^ := element.Equals(element2);
     Result := True;
@@ -1180,7 +1180,7 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not (element is TdfArray) then
       raise Exception.Create('Element must be an array.');
-    _res^ := StoreObjects(NativeGetNifArrayItemEx(TdfArray(element), subpath, value));
+    _res^ := StoreNif(NativeGetNifArrayItemEx(TdfArray(element), subpath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -1197,7 +1197,7 @@ begin
     if NifElementNotFound(element, path) then exit;
     if not (element is TdfArray) then
       raise Exception.Create('Element must be an array.');
-    _res^ := StoreObjects(NativeAddNifArrayItem(TdfArray(element), subpath, value));
+    _res^ := StoreNif(NativeAddNifArrayItem(TdfArray(element), subpath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -1227,7 +1227,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if NifElementNotFound(element, '') then exit;
     NativeMoveNifArrayItem(element, index);
     Result := True;
@@ -1242,7 +1242,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if (element is TwbNifFile) or NativeIsNifHeader(element) or NativeIsNifFooter(element) then
       raise Exception.Create('Unable to get the index of nif files, nif headers, and nif footers.');
     index^ := element.Index;
@@ -1258,8 +1258,8 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
-    _res^ := StoreObjects(element.Root);
+    element := ResolveNif(_id);
+    _res^ := StoreNif(element.Root);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -1272,14 +1272,14 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if element is TwbNifFile then
       raise Exception.Create('Element cannot be a nif file.');
     while not (element is TwbNifBlock) and Assigned(element.Parent) do
       element := element.Parent;
     if not (element is TwbNifBlock) then
       raise Exception.Create('Could not find the containing block for ' + element.Name);
-    _res^ := StoreObjects(element);
+    _res^ := StoreNif(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -1292,11 +1292,11 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if NifElementNotFound(element, '') then exit;
     if element is TwbNifFile then
       raise Exception.Create('Element cannot be a nif file.');
-    _res^ := StoreObjects(NativeGetNifContainer(element));
+    _res^ := StoreNif(NativeGetNifContainer(element));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -1374,7 +1374,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if not (element is TwbNiRef) then
       raise Exception.Create('Element must be a reference.');
     bool^ := wbIsNiObject(blockType, TwbNiRef(element).Template);
@@ -1406,7 +1406,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if NifElementNotFound(element, '') then exit;
     resultStr := element.Name;
     len^ := Length(resultStr);
@@ -1422,7 +1422,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     if not (element is TwbNifBlock) then
       raise Exception.Create('Interface must be a nif block.');
     resultStr := (element as TwbNifBlock).BlockType;
@@ -1947,7 +1947,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     bool^ := NativeIsNifHeader(element);
     Result := True;
   except
@@ -1961,7 +1961,7 @@ var
 begin
   Result := False;
   try
-    element := ResolveObjects(_id) as TdfElement;
+    element := ResolveNif(_id);
     bool^ := NativeIsNifFooter(element);
     Result := True;
   except
