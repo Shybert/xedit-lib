@@ -1551,7 +1551,7 @@ begin
   Put(Count, f);
   // if it is the first NiNode type block, add it as a root by default
   if (f.Elements['Roots'].Count = 0) and wbIsNiObject(aBlockType, 'NiNode') then
-    f.Elements['Roots'].Add.NativeValue := 0;
+    f.Elements['Roots'].Add.NativeValue := Result.Index;
 end;
 
 function TwbNifFile.InsertBlock(Index: Integer; const aBlockType: string): TwbNifBlock;
