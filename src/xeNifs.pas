@@ -9,7 +9,8 @@ uses
 
 {$region 'Native functions'}
 {$region 'Helpers'}
-function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
+function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean; overload;
+function NifElementNotFound(const element: TdfElement): Boolean; overload;
 function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
 function IsFilePathRelative(const filePath: string): Boolean;
 procedure MakeRelativeFilePathAbsolute(var filePath: string);
@@ -161,11 +162,18 @@ uses
 
 {$region 'Native functions'}
 {$region 'Helpers'}
-function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean;
+function NifElementNotFound(const element: TdfElement; path: PWideChar): Boolean; overload;
 begin
   Result := not Assigned(element);
   if Result then
     SoftException('Failed to resolve element at path: ' + string(path));
+end;
+
+function NifElementNotFound(const element: TdfElement): Boolean; overload;
+begin
+  Result := not Assigned(element);
+  if Result then
+    SoftException('Failed to resolve element.')
 end;
 
 function GetCorrespondingNifVersion(const gameMode: TwbGameMode): TwbNifVersion;
@@ -1041,7 +1049,7 @@ begin
   Result := False;
   try
     element := ResolveNif(_id);
-    if NifElementNotFound(element, '') then exit;
+    if NifElementNotFound(element) then exit;
     if element is TwbNifFile then
       raise Exception.Create('Element cannot be a nif file.');
     names := TStringList.Create;
@@ -1113,7 +1121,7 @@ begin
   Result := False;
   try
     element := ResolveNif(_id);
-    if NifElementNotFound(element, '') then exit;
+    if NifElementNotFound(element) then exit;
     count^ := element.Count;
     Result := True;
   except
@@ -1128,9 +1136,9 @@ begin
   Result := False;
   try
     element := ResolveNif(_id);
-    if NifElementNotFound(element, '') then exit;
+    if NifElementNotFound(element) then exit;
     element2 := ResolveNif(_id2);
-    if NifElementNotFound(element2, '') then exit;
+    if NifElementNotFound(element2) then exit;
     bool^ := element.Equals(element2);
     Result := True;
   except
@@ -1228,7 +1236,7 @@ begin
   Result := False;
   try
     element := ResolveNif(_id);
-    if NifElementNotFound(element, '') then exit;
+    if NifElementNotFound(element) then exit;
     NativeMoveNifArrayItem(element, index);
     Result := True;
   except
@@ -1293,7 +1301,7 @@ begin
   Result := False;
   try
     element := ResolveNif(_id);
-    if NifElementNotFound(element, '') then exit;
+    if NifElementNotFound(element) then exit;
     if element is TwbNifFile then
       raise Exception.Create('Element cannot be a nif file.');
     _res^ := StoreNif(NativeGetNifContainer(element));
@@ -1407,7 +1415,7 @@ begin
   Result := False;
   try
     element := ResolveNif(_id);
-    if NifElementNotFound(element, '') then exit;
+    if NifElementNotFound(element) then exit;
     resultStr := element.Name;
     len^ := Length(resultStr);
     Result := True;
