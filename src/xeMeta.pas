@@ -12,7 +12,7 @@ type
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
-  function ResolveNif(_id: Cardinal): TdfElement;
+  function NifResolve(_id: Cardinal): TdfElement;
   procedure StoreList(lst: TList; len: PInteger);
   procedure StoreObjectList(lst: TList; len: PInteger);
   procedure FilterResultArray;
@@ -21,7 +21,7 @@ type
   procedure StoreIfAssigned(const x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(const x: IInterface): Cardinal;
   function StoreNodes(nodes: TDynViewNodeDatas): Cardinal;
-  function StoreNif(element: TdfElement): Cardinal;
+  function NifStore(element: TdfElement): Cardinal;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
   procedure SetResultFromList(var sl: TStringList; len: PInteger);
   {$endregion}
@@ -37,7 +37,7 @@ type
   function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl;
   function ReleaseNodes(_id: Cardinal): WordBool; cdecl;
-  function ReleaseNif(_id: Cardinal): WordBool; cdecl;
+  function NifRelease(_id: Cardinal): WordBool; cdecl;
   function Switch(_id, _id2: Cardinal): WordBool; cdecl;
   function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function CleanStore: WordBool; cdecl;
@@ -105,7 +105,7 @@ begin
   Result := _nodesStore[_id];
 end;
 
-function ResolveNif(_id: Cardinal): TdfElement;
+function NifResolve(_id: Cardinal): TdfElement;
 begin
   if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
   Result := _nifStore[_id];
@@ -127,7 +127,7 @@ var
 begin
   SetLength(resultArray, lst.Count);
   for i := 0 to Pred(lst.Count) do
-    resultArray[i] := StoreNif(lst[i]);
+    resultArray[i] := NifStore(lst[i]);
   len^ := Length(resultArray);
 end;
 
@@ -309,7 +309,7 @@ begin
   Result := _nodesStore.Add(nodes);
 end;
 
-function StoreNif(element: TdfElement): Cardinal;
+function NifStore(element: TdfElement): Cardinal;
 begin
     Result := _nifStore.Add(element);
 end;
@@ -479,7 +479,7 @@ begin
   end;
 end;
 
-function ReleaseNif(_id: Cardinal): WordBool; cdecl;
+function NifRelease(_id: Cardinal): WordBool; cdecl;
 begin
   Result := False;
   try
