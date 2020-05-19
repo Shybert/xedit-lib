@@ -961,6 +961,49 @@ begin
              end);
          end);
 
+       Describe('InsertNifBlock', procedure
+         begin
+            It('Should insert a new block with the provided block type', procedure
+              begin
+                ExpectSuccess(InsertNifBlock(xt1, 12, 'BSTreeNode', @h));
+                Expect(h > 0, 'Handle should be greater than 0');
+                TestHasNifElement(xt1, 'BSTreeNode');
+              end);
+
+            It('Should insert blocks at the provided index', procedure
+              begin
+                ExpectSuccess(InsertNifBlock(xt1, 6, 'BSXFlags', @h));
+                Expect(h > 0, 'Handle should be greater than 0');
+                TestGetNifElementIndex(h, '', 6);
+              end);                 
+
+            It('Should add a nif''s first NiNode type block as a root', procedure
+              begin
+                ExpectSuccess(CreateNif('', false, @h));
+                ExpectSuccess(GetNifElement(h, 'Roots', @h2));
+                
+                ExpectSuccess(AddNifBlock(h, '', 'BSFurnitureMarkerNode', @h3));
+                TestNifElementCount(h2, 0);
+                ExpectSuccess(InsertNifBlock(h, 0, 'BSFadeNode', @h3));
+                TestNifElementCount(h2, 1);
+                ExpectSuccess(InsertNifBlock(h, 0, 'BSFadeNode', @h3));
+                TestNifElementCount(h2, 1);
+              end);
+
+            It('Should fail if the block type is invalid', procedure
+              begin
+                ExpectFailure(InsertNifBlock(xt1, 0, 'NonExistingBlockType', @h));
+              end);
+
+           It('Should fail if the element isn''t a nif file.', procedure
+             begin
+               ExpectFailure(InsertNifBlock(rootBlock, 7, 'NiNode', @h));
+               ExpectFailure(InsertNifBlock(transformStruct, 8, 'NiNode', @h));
+               ExpectFailure(InsertNifBlock(vectorArray, 9, 'NiNode', @h));
+               ExpectFailure(InsertNifBlock(vector, 10, 'NiNode', @h));
+             end);
+         end);         
+
         Describe('RemoveNifBlock', procedure
           begin
             BeforeAll(procedure

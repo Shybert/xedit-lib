@@ -1,4 +1,4 @@
-unit xeNifs;
+﻿unit xeNifs;
 
 interface
 
@@ -87,6 +87,7 @@ function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBoo
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 function GetNifElements(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 function AddNifBlock(_id: Cardinal; path, blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
+function InsertNifBlock(_id: Cardinal; index: Integer; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
 function RemoveNifBlock(_id: Cardinal; path: PWideChar; recursive: WordBool): WordBool; cdecl;
 function MoveNifBlock(_id: Cardinal; path: PWideChar; newIndex: Integer): WordBool; cdecl;
 function GetNifBlocks(_id: Cardinal; search: PWideChar; len: PInteger): WordBool; cdecl;
@@ -974,6 +975,24 @@ begin
     else
       raise Exception.Create('Element must either be a nif file, an array, or a reference.');
 
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function InsertNifBlock(_id: Cardinal; index: Integer; blockType: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NifResolve(_id);
+    if NifElementNotFound(element) then exit;
+    if not (element is TwbNifFile) then
+      raise Exception.Create('Element must be a nif file.');
+
+    _res^ := NifStore(TwbNifFile(element).InsertBlock(index, blockType));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
