@@ -2634,7 +2634,6 @@ procedure TdfMerge.SerializeToJSON(const aJSON: TJSONBaseObject);
 var
   o: TJSONObject;
   i: integer;
-  v: Variant;
 begin
   if not Enabled then
     Exit;
@@ -2645,10 +2644,8 @@ begin
     o := TJSONObject.Create;
 
   with TdfMergeDef(FDef) do
-    for i := Low(Defs) to High(Defs) do begin
-      Defs[i].GetElementNativeValue(Self, FDataStart + ValueOffset[i], FDataStart + ValueOffset[i] + ValueDataSize[i], v);
-      o[Defs[i].Name] := v;
-    end;
+    for i := Low(Defs) to High(Defs) do
+      o[Defs[i].Name] := GetNativeValues(Defs[i].Name);
 
   if aJSON is TJSONObject then
     TJSONObject(aJSON).O[Name] := o;
