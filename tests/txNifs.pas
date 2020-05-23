@@ -2664,7 +2664,7 @@ begin
                 ExpectEqual(grs(len), '{"Scale":20}');
               end);
 
-            It('Should serialize integers and floats with FOnGetTexts as their edit value', procedure
+            It('Should serialize integers FOnGetText as their edit value', procedure
               begin
                 ExpectSuccess(NifElementToJson(xt1, 'Header\Version', @len));
                 ExpectEqual(grs(len), '{"Version":"20.2.0.7"}');

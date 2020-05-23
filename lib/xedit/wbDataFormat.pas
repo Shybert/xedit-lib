@@ -3256,9 +3256,7 @@ end;
 
 procedure TdfFloat.SerializeToJSON(const aJSON: TJSONBaseObject);
 begin
-  if Enabled then
-    if Assigned(FDef.OnGetText) then EditValueToJSON(aJSON)
-    else NativeValueToJSON(aJSON);
+  if Enabled then NativeValueToJSON(aJSON);
 end;
 
 
