@@ -619,6 +619,39 @@ begin
             end);
         end);
 
+      Describe('SetNifVersion', procedure
+        begin
+          AfterAll(procedure
+            begin
+              ExpectSuccess(SetNifVersion(nif, 4));
+            end);
+
+          It('Should set the version of a nif file', procedure
+            begin
+              ExpectSuccess(SetNifVersion(nif, 5));
+              ExpectSuccess(GetNifVersion(nif, @i));
+              ExpectEqual(i, 5);
+            end);
+
+          It('Should update version and user versions', procedure
+            begin
+              ExpectSuccess(SetNifVersion(nif, 2));
+              ExpectSuccess(GetNifValue(nif, 'Header\Version', @len));
+              ExpectEqual(grs(len), '20.0.0.5');
+              ExpectSuccess(GetNifIntValue(nif, 'Header\User Version', @i));
+              ExpectEqual(i, 11);
+              ExpectSuccess(GetNifIntValue(nif, 'Header\User Version 2', @i));
+              ExpectEqual(i, 11);
+            end);
+
+          It('Should fail if the element isn''t a nif file', procedure
+            begin
+              ExpectFailure(SetNifVersion(rootBlock, 4));
+              ExpectFailure(SetNifVersion(transformStruct, 4));
+              ExpectFailure(SetNifVersion(float, 4));
+            end);
+        end);        
+
       Describe('HasNifElement', procedure
         begin
           It('Should return true for blocks that exist', procedure
