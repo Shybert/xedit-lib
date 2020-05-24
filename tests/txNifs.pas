@@ -631,6 +631,24 @@ begin
             end);
         end);
 
+      Describe('GetNifVersion', procedure
+        begin
+          It('Should return the version of a nif file', procedure
+            begin
+              ExpectSuccess(GetNifVersion(nif, @i));
+              ExpectEqual(i, 4);
+              ExpectSuccess(GetNifVersion(xt1, @i));
+              ExpectEqual(i, 5);
+            end);        
+
+          It('Should fail if the element isn''t a nif file', procedure
+            begin
+              ExpectFailure(GetNifVersion(rootBlock, @i));
+              ExpectFailure(GetNifVersion(transformStruct, @i));
+              ExpectFailure(GetNifVersion(float, @i));
+            end);
+        end);
+
       Describe('HasNifElement', procedure
         begin
           It('Should return true for blocks that exist', procedure

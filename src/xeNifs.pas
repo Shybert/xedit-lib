@@ -1,4 +1,4 @@
-﻿unit xeNifs;
+unit xeNifs;
 
 interface
 
@@ -82,6 +82,7 @@ function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function FreeNif(_id: Cardinal): WordBool; cdecl;
 function SaveNif(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
 function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
+function GetNifVersion(_id: Cardinal; version: PByte): WordBool; cdecl;
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 function GetNifElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -901,6 +902,23 @@ begin
   Result := False;
   try
     _res^ := NifStore(NativeCreateNif(string(filePath), ignoreExists));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNifVersion(_id: Cardinal; version: PByte): WordBool; cdecl;
+var
+  element: TdfElement;
+begin
+  Result := False;
+  try
+    element := NifResolve(_id);
+    if NifElementNotFound(element) then exit;
+    if not (element is TwbNifFile) then
+      raise Exception.Create('Element must be a nif file.');
+    version^ := Ord(TwbNifFile(element).NifVersion);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
