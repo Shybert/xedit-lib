@@ -587,47 +587,17 @@ begin
 
       Describe('CreateNif', procedure
         begin
-          AfterAll(procedure
+          It('Should create a nif', procedure
             begin
-              DeleteNifs(['test.nif', 'meshes\test.nif', 'meshes\test\test.nif']);
+              ExpectSuccess(CreateNif(@h));
+              Expect(h > 0, 'Should return a handle');
             end);
 
-          It('Should return true for an absolute path', procedure
+          It('Should set the correct nif version', procedure
             begin
-              ExpectSuccess(CreateNif(PWideChar(GetDataPath + 'test.nif'), true, @h));
-              ExpectSuccess(FileExists(GetDataPath + 'test.nif'));
-            end);
-
-          It('Should return true for a path relative to data\', procedure
-            begin
-              ExpectSuccess(CreateNif('meshes\test.nif', true, @h));
-              ExpectSuccess(FileExists(GetDataPath + 'meshes\test.nif'));
-            end);
-
-          It('Should return true for a relative path starting with data\', procedure
-            begin
-              ExpectSuccess(CreateNif('data\meshes\test\test.nif', true, @h));
-              ExpectSuccess(FileExists(GetDataPath + 'meshes\test\test.nif'));
-            end);
-
-          It('Should return false if the file exists and ignoreExists is false', procedure
-            begin
-              ExpectFailure(CreateNif('test.nif', false, @h));
-            end);
-
-          It('Should return true if the file exists and ignoreExists is true', procedure
-            begin
-              ExpectSuccess(CreateNif('test.nif', true, @h));
-            end);
-
-          It('Should let you create a nif without saving it to the disk, by passing an empty filepath', procedure
-            begin
-              ExpectSuccess(CreateNif('', false, @h));
-            end);
-
-          It('Should set the correct Nif version', procedure
-            begin
-              // TODO
+              ExpectSuccess(CreateNif(@h));
+              ExpectSuccess(GetNifVersion(h, @i));
+              ExpectEqual(i, 4);
             end);
         end);
 
@@ -959,7 +929,7 @@ begin
 
             It('Should add a nif''s first NiNode type block as a root', procedure
               begin
-                ExpectSuccess(CreateNif('', false, @h));
+                ExpectSuccess(CreateNif(@h));
                 ExpectSuccess(GetNifElement(h, 'Roots', @h2));
                 
                 ExpectSuccess(AddNifBlock(h, '', 'BSFurnitureMarkerNode', @h3));
@@ -997,7 +967,7 @@ begin
 
             It('Should add a nif''s first NiNode type block as a root', procedure
               begin
-                ExpectSuccess(CreateNif('', false, @h));
+                ExpectSuccess(CreateNif(@h));
                 ExpectSuccess(GetNifElement(h, 'Roots', @h2));
                 
                 ExpectSuccess(AddNifBlock(h, '', 'BSFurnitureMarkerNode', @h3));

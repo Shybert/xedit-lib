@@ -1,4 +1,4 @@
-unit xeNifs;
+﻿unit xeNifs;
 
 interface
 
@@ -33,7 +33,6 @@ procedure SplitPath(const path: String; var key, nextPath: String);
 
 function NativeLoadNif(const filePath: string): TwbNifFile;
 procedure NativeSaveNif(const nif: TwbNifFile; filePath: string);
-function NativeCreateNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
 
 function ResolveByIndex(const element: TdfElement; index: Integer): TdfElement;
 function ResolveKeyword(const nif: TwbNifFile; const keyword: String): TdfElement;
@@ -81,7 +80,7 @@ procedure SetMatrixRotation(const element: TdfElement; const rotation: String);
 function LoadNif(filePath: PWideChar; _res: PCardinal): WordBool; cdecl;
 function FreeNif(_id: Cardinal): WordBool; cdecl;
 function SaveNif(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
-function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
+function CreateNif(_res: PCardinal): WordBool; cdecl;
 function GetNifVersion(_id: Cardinal; version: PByte): WordBool; cdecl;
 
 function HasNifElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
@@ -351,24 +350,6 @@ begin
     MakeRelativeFilePathAbsolute(filePath);
   ForceDirectories(ExtractFileDir(filePath));
   nif.SaveToFile(filePath);
-end;
-
-function NativeCreateNif(filePath: string; ignoreExists: Boolean): TwbNifFile;
-var
-  nif: TwbNifFile;
-begin
-  nif := TwbNifFile.Create;
-  nif.NifVersion := GetCorrespondingNifVersion(wbGameMode);
-
-  if filePath <> '' then begin
-    if IsFilePathRelative(filePath) then
-      MakeRelativeFilePathAbsolute(filePath);
-    if not ignoreExists and FileExists(filePath) then
-      raise Exception.Create(Format('Nif with filepath %s already exists.', [filePath]));
-    NativeSaveNif(nif, filePath);
-  end;
-
-  Result := nif;
 end;
 
 function ResolveByIndex(const element: TdfElement; index: Integer): TdfElement;
@@ -897,11 +878,15 @@ begin
   end;
 end;
 
-function CreateNif(filePath: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
+function CreateNif(_res: PCardinal): WordBool; cdecl;
+var
+  nif: TwbNifFile;
 begin
   Result := False;
   try
-    _res^ := NifStore(NativeCreateNif(string(filePath), ignoreExists));
+    nif := TwbNifFile.Create;
+    nif.NifVersion := GetCorrespondingNifVersion(wbGameMode);  
+    _res^ := NifStore(nif);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
